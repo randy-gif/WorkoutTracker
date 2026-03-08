@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
-enum class TopTab(val route: String, val label: String) {
+enum class ExercisesTabs(val route: String, val label: String) {
     CHEST("chest", "Chest"),
     BACK("back", "Back"),
     LEGS("legs", "Legs"),
@@ -20,15 +20,15 @@ enum class TopTab(val route: String, val label: String) {
 }
 
 @Composable
-fun TopTabs(navController: NavHostController, currentRoute: String?) {
-    val selectedIndex = TopTab.entries.indexOfFirst { it.route == currentRoute }.coerceAtLeast(0)
+fun TabRowHeader(navController: NavHostController, currentRoute: String?) {
+    val selectedIndex = ExercisesTabs.entries.indexOfFirst { it.route == currentRoute }.coerceAtLeast(0)
 
     ScrollableTabRow(
         selectedTabIndex = selectedIndex,
         modifier = Modifier.fillMaxWidth(),
         edgePadding = 6.dp
     ) {
-        TopTab.entries.forEachIndexed { index, tab ->
+        ExercisesTabs.entries.forEachIndexed { index, tab ->
             Tab(
                 selected = index == selectedIndex,
                 onClick = {
