@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.rvilleda.workouttracker.model.allExercises
 import com.rvilleda.workouttracker.ui.components.ExerciseCard
 
-object ExerciseTabs {
+object ExercisesTabContent {
     @Composable
     private fun ExerciseListByGroup(muscleGroupName: String) {
         val filteredExercises = allExercises.filter { it.muscleGroup == muscleGroupName }
