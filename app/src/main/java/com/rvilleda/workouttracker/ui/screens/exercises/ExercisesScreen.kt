@@ -2,19 +2,15 @@ package com.rvilleda.workouttracker.ui.screens.exercises
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -33,11 +29,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.rvilleda.workouttracker.R
-import com.rvilleda.workouttracker.ui.screens.exercises.components.TopTab
-import com.rvilleda.workouttracker.ui.screens.exercises.components.TopTabs
-import com.rvilleda.workouttracker.ui.screens.exercises.tabs.ExerciseTabs
-import com.rvilleda.workouttracker.ui.screens.home.ForYouTab
-import com.rvilleda.workouttracker.ui.screens.home.PlaceholderTab
+import com.rvilleda.workouttracker.ui.screens.exercises.components.ExercisesTabs
+import com.rvilleda.workouttracker.ui.screens.exercises.components.TabRowHeader
+import com.rvilleda.workouttracker.ui.screens.exercises.tabs.ExercisesTabContent
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,7 +44,7 @@ fun ExercisesScreen() {
 
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: TopTab.CHEST.route
+    val currentRoute = navBackStackEntry?.destination?.route ?: ExercisesTabs.CHEST.route
 
 
     Scaffold(
@@ -81,34 +75,34 @@ fun ExercisesScreen() {
                     },
                     scrollBehavior = scrollBehavior
                 )
-                TopTabs(navController = navController, currentRoute = currentRoute)
+                TabRowHeader(navController = navController, currentRoute = currentRoute)
             }
         }, content = { padding ->
             NavHost(
                 navController = navController,
-                startDestination = TopTab.CHEST.route,
+                startDestination = ExercisesTabs.CHEST.route,
                 modifier = Modifier.padding(padding)
             ) {
-                composable(TopTab.CHEST.route) {
-                    ExerciseTabs.Chest()
+                composable(ExercisesTabs.CHEST.route) {
+                    ExercisesTabContent.Chest()
                 }
-                composable(TopTab.BACK.route) {
-                    ExerciseTabs.Back()
+                composable(ExercisesTabs.BACK.route) {
+                    ExercisesTabContent.Back()
                 }
-                composable(TopTab.LEGS.route) {
-                    ExerciseTabs.Legs()
+                composable(ExercisesTabs.LEGS.route) {
+                    ExercisesTabContent.Legs()
                 }
-                composable(TopTab.SHOULDERS.route) {
-                    ExerciseTabs.Shoulders()
+                composable(ExercisesTabs.SHOULDERS.route) {
+                    ExercisesTabContent.Shoulders()
                 }
-                composable(TopTab.ARMS.route) {
-                    ExerciseTabs.Arms()
+                composable(ExercisesTabs.ARMS.route) {
+                    ExercisesTabContent.Arms()
                 }
-                composable(TopTab.CORE.route) {
-                    ExerciseTabs.Core()
+                composable(ExercisesTabs.CORE.route) {
+                    ExercisesTabContent.Core()
                 }
-                composable(TopTab.CARDIO.route) {
-                    ExerciseTabs.Cardio()
+                composable(ExercisesTabs.CARDIO.route) {
+                    ExercisesTabContent.Cardio()
                 }
             }
         }
