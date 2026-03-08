@@ -23,7 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.rvilleda.workouttracker.R
-import com.rvilleda.workouttracker.ui.navigation.TopTab
+import com.rvilleda.workouttracker.ui.screens.home.components.TopTab
 import com.rvilleda.workouttracker.ui.screens.home.components.TopTabs
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -8,7 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.rvilleda.workouttracker.ui.navigation.TopTab
+
+enum class TopTab(val route: String, val label: String) {
+    FOR_YOU("for_you", "For You"),
+    TOP_EXERCISES("top_exercises", "Top Exercises"),
+    TOP_ROUTINES("top_routines", "Top Routines"),
+    TUTORIALS("tutorials", "Tutorials")
+}
 
 @Composable
 fun TopTabs(navController: NavHostController, currentRoute: String?) {
