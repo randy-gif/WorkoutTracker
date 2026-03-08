@@ -18,7 +18,6 @@ object ExercisesTabContent {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(16.dp)
         ) {
             items(filteredExercises.size) { index ->
                 ExerciseCard(
