@@ -104,7 +104,7 @@ val allExercises = listOf(
     Exercise("Forearm Wrist Curls", "Arms", 3, 20),
     Exercise("Zottman Curls", "Arms", 3, 12),
 
-    // --- CORE & CARDIO (15) ---
+    // --- CORE (8) ---
     Exercise("Plank", "Core", 3, 60), // 60 sec
     Exercise("Crunches", "Core", 3, 20),
     Exercise("Leg Raises", "Core", 3, 15),
@@ -113,6 +113,8 @@ val allExercises = listOf(
     Exercise("Bicycle Crunches", "Core", 3, 20),
     Exercise("Ab Wheel Rollout", "Core", 3, 10),
     Exercise("Mountain Climbers", "Core", 3, 30),
+
+    // --- CARDIO (7) ---
     Exercise("Burpees", "Cardio", 3, 15),
     Exercise("Box Jumps", "Cardio", 3, 10),
     Exercise("Kettlebell Swing", "Cardio", 3, 15),
