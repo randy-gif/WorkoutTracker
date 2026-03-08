@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.rvilleda.workouttracker.model.Exercise
+import com.rvilleda.workouttracker.model.allExercises
 import com.rvilleda.workouttracker.ui.components.ExerciseCard
 
 
@@ -22,8 +23,11 @@ fun ForYouTab() {
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(20) {
-            ExerciseCard(exercise = Exercise("Bench Press", "Chest", 3, 10, "135 lbs"), onClick = { /* Handle click later */ })
+        items(allExercises.size) { index ->
+            ExerciseCard(
+                exercise = allExercises[index],
+                onClick = { /* Handle exercise card click */ }
+            )
         }
     }
 }
@@ -31,7 +35,9 @@ fun ForYouTab() {
 @Composable
 fun PlaceholderTab(text: String) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
