@@ -1,125 +1,106 @@
 package com.rvilleda.workouttracker.model
 
+import java.util.UUID
+enum class MuscleGroup(val displayName: String) {
+    CHEST("Chest"),
+    BACK("Back"),
+    LEGS("Legs"),
+    SHOULDERS("Shoulders"),
+    ARMS("Arms"),
+    CORE("Core")
+}
+
+enum class Equipment(val displayName: String) {
+    BARBELL("Barbell"),
+    DUMBBELL("Dumbbell"),
+    MACHINE("Machine"),
+    CABLE("Cable"),
+    BODYWEIGHT("Bodyweight"),
+    SMITH_MACHINE("Smith Machine")
+}
+
+enum class MovementType(val displayName: String) {
+    COMPOUND("Compound"), // Multi-joint (e.g., Squat, Bench Press)
+    ISOLATION("Isolation") // Single-joint (e.g., Bicep Curl)
+}
 data class Exercise(
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
-    val muscleGroup: String,
-    val sets: Int,
-    val reps: Int,
-    val lastWeight: String = "0 lbs"
+    val muscleGroup: MuscleGroup,
+    val equipment: Equipment,
+    val movementType: MovementType
 )
 
 val allExercises = listOf(
-    // --- CHEST (15) ---
-    Exercise("Bench Press (Barbell)", "Chest", 3, 10),
-    Exercise("Incline Bench Press (Barbell)", "Chest", 3, 10),
-    Exercise("Decline Bench Press (Barbell)", "Chest", 3, 10),
-    Exercise("Dumbbell Chest Press", "Chest", 3, 12),
-    Exercise("Incline Dumbbell Press", "Chest", 3, 12),
-    Exercise("Decline Dumbbell Press", "Chest", 3, 12),
-    Exercise("Chest Fly (Dumbbell)", "Chest", 3, 15),
-    Exercise("Cable Crossover", "Chest", 3, 15),
-    Exercise("Pec Deck Machine", "Chest", 3, 12),
-    Exercise("Pushups", "Chest", 3, 20),
-    Exercise("Diamond Pushups", "Chest", 3, 15),
-    Exercise("Dips (Chest focus)", "Chest", 3, 10),
-    Exercise("Landmine Press", "Chest", 3, 12),
-    Exercise("Floor Press", "Chest", 3, 10),
-    Exercise("Svend Press", "Chest", 3, 15),
+    // --- CHEST ---
+    Exercise("ex_chest_001", "Barbell Bench Press", MuscleGroup.CHEST, Equipment.BARBELL, MovementType.COMPOUND),
+    Exercise("ex_chest_002", "Incline Barbell Press", MuscleGroup.CHEST, Equipment.BARBELL, MovementType.COMPOUND),
+    Exercise("ex_chest_003", "Dumbbell Bench Press", MuscleGroup.CHEST, Equipment.DUMBBELL, MovementType.COMPOUND),
+    Exercise("ex_chest_004", "Incline Dumbbell Press", MuscleGroup.CHEST, Equipment.DUMBBELL, MovementType.COMPOUND),
+    Exercise("ex_chest_005", "Decline Barbell Press", MuscleGroup.CHEST, Equipment.BARBELL, MovementType.COMPOUND),
+    Exercise("ex_chest_006", "Cable Crossovers", MuscleGroup.CHEST, Equipment.CABLE, MovementType.ISOLATION),
+    Exercise("ex_chest_007", "Machine Chest Press", MuscleGroup.CHEST, Equipment.MACHINE, MovementType.COMPOUND),
+    Exercise("ex_chest_008", "Pec Deck Fly", MuscleGroup.CHEST, Equipment.MACHINE, MovementType.ISOLATION),
+    Exercise("ex_chest_009", "Push-ups", MuscleGroup.CHEST, Equipment.BODYWEIGHT, MovementType.COMPOUND),
+    Exercise("ex_chest_010", "Dips (Chest Focus)", MuscleGroup.CHEST, Equipment.BODYWEIGHT, MovementType.COMPOUND),
 
-    // --- BACK (15) ---
-    Exercise("Deadlift (Conventional)", "Back", 3, 5),
-    Exercise("Pull Ups", "Back", 3, 10),
-    Exercise("Chin Ups", "Back", 3, 10),
-    Exercise("Lat Pulldown (Wide Grip)", "Back", 3, 12),
-    Exercise("Bent Over Row (Barbell)", "Back", 3, 10),
-    Exercise("One-Arm Dumbbell Row", "Back", 3, 12),
-    Exercise("Seated Cable Row", "Back", 3, 12),
-    Exercise("T-Bar Row", "Back", 3, 10),
-    Exercise("Face Pulls", "Back", 3, 15),
-    Exercise("Back Extensions", "Back", 3, 15),
-    Exercise("Good Mornings", "Back", 3, 10),
-    Exercise("Reverse Fly (Dumbbell)", "Back", 3, 15),
-    Exercise("Lat Pulldown (Underhand)", "Back", 3, 12),
-    Exercise("Straight Arm Pulldown", "Back", 3, 15),
-    Exercise("Rack Pulls", "Back", 3, 5),
+    // --- BACK ---
+    Exercise("ex_back_001", "Barbell Deadlift", MuscleGroup.BACK, Equipment.BARBELL, MovementType.COMPOUND),
+    Exercise("ex_back_002", "Pull-ups", MuscleGroup.BACK, Equipment.BODYWEIGHT, MovementType.COMPOUND),
+    Exercise("ex_back_003", "Lat Pulldown", MuscleGroup.BACK, Equipment.CABLE, MovementType.COMPOUND),
+    Exercise("ex_back_004", "Barbell Bent-Over Row", MuscleGroup.BACK, Equipment.BARBELL, MovementType.COMPOUND),
+    Exercise("ex_back_005", "Dumbbell Single-Arm Row", MuscleGroup.BACK, Equipment.DUMBBELL, MovementType.COMPOUND),
+    Exercise("ex_back_006", "Seated Cable Row", MuscleGroup.BACK, Equipment.CABLE, MovementType.COMPOUND),
+    Exercise("ex_back_007", "T-Bar Row", MuscleGroup.BACK, Equipment.BARBELL, MovementType.COMPOUND),
+    Exercise("ex_back_008", "Straight-Arm Pulldown", MuscleGroup.BACK, Equipment.CABLE, MovementType.ISOLATION),
+    Exercise("ex_back_009", "Machine Row", MuscleGroup.BACK, Equipment.MACHINE, MovementType.COMPOUND),
+    Exercise("ex_back_010", "Back Extensions", MuscleGroup.BACK, Equipment.BODYWEIGHT, MovementType.ISOLATION),
 
-    // --- LEGS (20) ---
-    Exercise("Back Squat (Barbell)", "Legs", 3, 8),
-    Exercise("Front Squat (Barbell)", "Legs", 3, 8),
-    Exercise("Leg Press", "Legs", 3, 12),
-    Exercise("Walking Lunges", "Legs", 3, 20),
-    Exercise("Bulgarian Split Squat", "Legs", 3, 10),
-    Exercise("Goblet Squat", "Legs", 3, 12),
-    Exercise("Romanian Deadlift", "Legs", 3, 10),
-    Exercise("Leg Extensions", "Legs", 3, 15),
-    Exercise("Leg Curls (Lying)", "Legs", 3, 15),
-    Exercise("Leg Curls (Seated)", "Legs", 3, 15),
-    Exercise("Hack Squat Machine", "Legs", 3, 10),
-    Exercise("Calf Raises (Standing)", "Legs", 3, 20),
-    Exercise("Calf Raises (Seated)", "Legs", 3, 20),
-    Exercise("Hip Thrusts", "Legs", 3, 10),
-    Exercise("Glute Bridges", "Legs", 3, 15),
-    Exercise("Sumo Squat", "Legs", 3, 12),
-    Exercise("Box Squat", "Legs", 3, 8),
-    Exercise("Step Ups", "Legs", 3, 12),
-    Exercise("Pistol Squat", "Legs", 3, 5),
-    Exercise("Glute Ham Raise", "Legs", 3, 10),
+    // --- LEGS & GLUTES ---
+    Exercise("ex_legs_001", "Barbell Back Squat", MuscleGroup.LEGS, Equipment.BARBELL, MovementType.COMPOUND),
+    Exercise("ex_legs_002", "Barbell Front Squat", MuscleGroup.LEGS, Equipment.BARBELL, MovementType.COMPOUND),
+    Exercise("ex_legs_003", "Romanian Deadlift (RDL)", MuscleGroup.LEGS, Equipment.BARBELL, MovementType.COMPOUND),
+    Exercise("ex_legs_004", "Leg Press", MuscleGroup.LEGS, Equipment.MACHINE, MovementType.COMPOUND),
+    Exercise("ex_legs_005", "Bulgarian Split Squat", MuscleGroup.LEGS, Equipment.DUMBBELL, MovementType.COMPOUND),
+    Exercise("ex_legs_006", "Leg Extensions", MuscleGroup.LEGS, Equipment.MACHINE, MovementType.ISOLATION),
+    Exercise("ex_legs_007", "Seated Leg Curl", MuscleGroup.LEGS, Equipment.MACHINE, MovementType.ISOLATION),
+    Exercise("ex_legs_008", "Lying Leg Curl", MuscleGroup.LEGS, Equipment.MACHINE, MovementType.ISOLATION),
+    Exercise("ex_legs_009", "Standing Calf Raises", MuscleGroup.LEGS, Equipment.MACHINE, MovementType.ISOLATION),
+    Exercise("ex_legs_010", "Glute Bridge", MuscleGroup.LEGS, Equipment.BODYWEIGHT, MovementType.ISOLATION),
 
-    // --- SHOULDERS (15) ---
-    Exercise("Overhead Press (Barbell)", "Shoulders", 3, 8),
-    Exercise("Dumbbell Shoulder Press", "Shoulders", 3, 10),
-    Exercise("Arnold Press", "Shoulders", 3, 10),
-    Exercise("Lateral Raises (Dumbbell)", "Shoulders", 3, 15),
-    Exercise("Front Raises (Dumbbell)", "Shoulders", 3, 15),
-    Exercise("Upright Row (Barbell)", "Shoulders", 3, 12),
-    Exercise("Military Press (Seated)", "Shoulders", 3, 8),
-    Exercise("Rear Delt Fly (Machine)", "Shoulders", 3, 15),
-    Exercise("Push Press", "Shoulders", 3, 5),
-    Exercise("Handstand Pushups", "Shoulders", 3, 8),
-    Exercise("Face Pulls (Cable)", "Shoulders", 3, 15),
-    Exercise("Clean and Press", "Shoulders", 3, 5),
-    Exercise("Bradford Press", "Shoulders", 3, 12),
-    Exercise("Single-Arm Landmine Press", "Shoulders", 3, 12),
-    Exercise("Battle Ropes", "Shoulders", 3, 30), // 30 sec
+    // --- SHOULDERS ---
+    Exercise("ex_shld_001", "Overhead Press (OHP)", MuscleGroup.SHOULDERS, Equipment.BARBELL, MovementType.COMPOUND),
+    Exercise("ex_shld_002", "Dumbbell Shoulder Press", MuscleGroup.SHOULDERS, Equipment.DUMBBELL, MovementType.COMPOUND),
+    Exercise("ex_shld_003", "Arnold Press", MuscleGroup.SHOULDERS, Equipment.DUMBBELL, MovementType.COMPOUND),
+    Exercise("ex_shld_004", "Dumbbell Lateral Raise", MuscleGroup.SHOULDERS, Equipment.DUMBBELL, MovementType.ISOLATION),
+    Exercise("ex_shld_005", "Cable Lateral Raise", MuscleGroup.SHOULDERS, Equipment.CABLE, MovementType.ISOLATION),
+    Exercise("ex_shld_006", "Dumbbell Front Raise", MuscleGroup.SHOULDERS, Equipment.DUMBBELL, MovementType.ISOLATION),
+    Exercise("ex_shld_007", "Reverse Pec Deck", MuscleGroup.SHOULDERS, Equipment.MACHINE, MovementType.ISOLATION),
+    Exercise("ex_shld_008", "Face Pulls", MuscleGroup.SHOULDERS, Equipment.CABLE, MovementType.ISOLATION),
+    Exercise("ex_shld_009", "Smith Machine Press", MuscleGroup.SHOULDERS, Equipment.SMITH_MACHINE, MovementType.COMPOUND),
+    Exercise("ex_shld_010", "Barbell Shrugs", MuscleGroup.SHOULDERS, Equipment.BARBELL, MovementType.ISOLATION),
 
-    // --- ARMS (20) ---
-    Exercise("Bicep Curl (Barbell)", "Arms", 3, 12),
-    Exercise("Dumbbell Curl", "Arms", 3, 12),
-    Exercise("Hammer Curl", "Arms", 3, 12),
-    Exercise("Preacher Curl", "Arms", 3, 10),
-    Exercise("Concentration Curl", "Arms", 3, 12),
-    Exercise("21s (Bicep Curls)", "Arms", 3, 21),
-    Exercise("Tricep Pushdown (Cable)", "Arms", 3, 15),
-    Exercise("Skull Crushers", "Arms", 3, 12),
-    Exercise("Overhead Tricep Extension", "Arms", 3, 12),
-    Exercise("Tricep Dips", "Arms", 3, 12),
-    Exercise("Close Grip Bench Press", "Arms", 3, 8),
-    Exercise("Rope Tricep Extension", "Arms", 3, 15),
-    Exercise("Incline Dumbbell Curl", "Arms", 3, 12),
-    Exercise("Spider Curls", "Arms", 3, 12),
-    Exercise("Reverse Curl (EZ Bar)", "Arms", 3, 12),
-    Exercise("Cable Bicep Curl", "Arms", 3, 15),
-    Exercise("Tricep Kickbacks", "Arms", 3, 15),
-    Exercise("Bench Dips", "Arms", 3, 15),
-    Exercise("Forearm Wrist Curls", "Arms", 3, 20),
-    Exercise("Zottman Curls", "Arms", 3, 12),
+    // --- ARMS (BICEPS & TRICEPS) ---
+    Exercise("ex_arms_001", "Barbell Bicep Curl", MuscleGroup.ARMS, Equipment.BARBELL, MovementType.ISOLATION),
+    Exercise("ex_arms_002", "Dumbbell Alternate Curl", MuscleGroup.ARMS, Equipment.DUMBBELL, MovementType.ISOLATION),
+    Exercise("ex_arms_003", "Hammer Curls", MuscleGroup.ARMS, Equipment.DUMBBELL, MovementType.ISOLATION),
+    Exercise("ex_arms_004", "Cable Rope Curls", MuscleGroup.ARMS, Equipment.CABLE, MovementType.ISOLATION),
+    Exercise("ex_arms_005", "Preacher Curl", MuscleGroup.ARMS, Equipment.MACHINE, MovementType.ISOLATION),
+    Exercise("ex_arms_006", "Tricep Rope Pushdown", MuscleGroup.ARMS, Equipment.CABLE, MovementType.ISOLATION),
+    Exercise("ex_arms_007", "Skullcrushers (EZ Bar)", MuscleGroup.ARMS, Equipment.BARBELL, MovementType.ISOLATION),
+    Exercise("ex_arms_008", "Overhead Tricep Extension", MuscleGroup.ARMS, Equipment.DUMBBELL, MovementType.ISOLATION),
+    Exercise("ex_arms_009", "Close-Grip Bench Press", MuscleGroup.ARMS, Equipment.BARBELL, MovementType.COMPOUND),
+    Exercise("ex_arms_010", "Tricep Kickbacks", MuscleGroup.ARMS, Equipment.DUMBBELL, MovementType.ISOLATION),
 
-    // --- CORE (8) ---
-    Exercise("Plank", "Core", 3, 60), // 60 sec
-    Exercise("Crunches", "Core", 3, 20),
-    Exercise("Leg Raises", "Core", 3, 15),
-    Exercise("Russian Twists", "Core", 3, 30),
-    Exercise("Hanging Leg Raise", "Core", 3, 10),
-    Exercise("Bicycle Crunches", "Core", 3, 20),
-    Exercise("Ab Wheel Rollout", "Core", 3, 10),
-    Exercise("Mountain Climbers", "Core", 3, 30),
-
-    // --- CARDIO (7) ---
-    Exercise("Burpees", "Cardio", 3, 15),
-    Exercise("Box Jumps", "Cardio", 3, 10),
-    Exercise("Kettlebell Swing", "Cardio", 3, 15),
-    Exercise("Jump Rope", "Cardio", 3, 60), // 60 sec
-    Exercise("Medicine Ball Slam", "Cardio", 3, 12),
-    Exercise("Bear Crawl", "Core", 3, 30), // 30 sec
-    Exercise("Dead Bug", "Core", 3, 12)
+    // --- CORE ---
+    Exercise("ex_core_001", "Cable Crunches", MuscleGroup.CORE, Equipment.CABLE, MovementType.ISOLATION),
+    Exercise("ex_core_002", "Hanging Leg Raises", MuscleGroup.CORE, Equipment.BODYWEIGHT, MovementType.ISOLATION),
+    Exercise("ex_core_003", "Ab Wheel Rollout", MuscleGroup.CORE, Equipment.BODYWEIGHT, MovementType.COMPOUND),
+    Exercise("ex_core_004", "Decline Crunches", MuscleGroup.CORE, Equipment.BODYWEIGHT, MovementType.ISOLATION),
+    Exercise("ex_core_005", "Russian Twists", MuscleGroup.CORE, Equipment.DUMBBELL, MovementType.ISOLATION),
+    Exercise("ex_core_006", "Plank", MuscleGroup.CORE, Equipment.BODYWEIGHT, MovementType.ISOLATION),
+    Exercise("ex_core_007", "Machine Crunches", MuscleGroup.CORE, Equipment.MACHINE, MovementType.ISOLATION),
+    Exercise("ex_core_008", "Bicycle Crunches", MuscleGroup.CORE, Equipment.BODYWEIGHT, MovementType.ISOLATION),
+    Exercise("ex_core_009", "Dragon Flags", MuscleGroup.CORE, Equipment.BODYWEIGHT, MovementType.COMPOUND),
+    Exercise("ex_core_010", "Woodchoppers", MuscleGroup.CORE, Equipment.CABLE, MovementType.COMPOUND)
 )
