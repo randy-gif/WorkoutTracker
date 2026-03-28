@@ -16,7 +16,6 @@ enum class ExercisesTabs(val route: String, val label: String) {
     SHOULDERS("shoulders", "Shoulders"),
     ARMS("arms", "Arms"),
     CORE("core", "Core"),
-    CARDIO("cardio", "Cardio")
 }
 
 @Composable

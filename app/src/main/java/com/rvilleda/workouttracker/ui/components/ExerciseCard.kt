@@ -46,7 +46,7 @@ fun ExerciseCard(
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
-                        text = exercise.muscleGroup,
+                        text = exercise.muscleGroup.toString(),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -55,18 +55,6 @@ fun ExerciseCard(
             }
 
             // Right Side: Stats and Icon
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "${exercise.sets} x ${exercise.reps}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "Last: ${exercise.lastWeight}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
 
             Icon(
                 imageVector = Icons.Default.KeyboardArrowRight,

@@ -101,9 +101,7 @@ fun ExercisesScreen() {
                 composable(ExercisesTabs.CORE.route) {
                     ExercisesTabContent.Core()
                 }
-                composable(ExercisesTabs.CARDIO.route) {
-                    ExercisesTabContent.Cardio()
-                }
+
             }
         }
     )

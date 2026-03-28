@@ -9,10 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.rvilleda.workouttracker.model.allExercises
 import com.rvilleda.workouttracker.ui.components.ExerciseCard
+import com.rvilleda.workouttracker.model.MuscleGroup
 
 object ExercisesTabContent {
     @Composable
-    private fun ExerciseListByGroup(muscleGroupName: String) {
+    private fun ExerciseListByGroup(muscleGroupName: MuscleGroup) {
         val filteredExercises = allExercises.filter { it.muscleGroup == muscleGroupName }
 
         LazyColumn(
@@ -28,23 +29,20 @@ object ExercisesTabContent {
         }
     }
     @Composable
-    fun Chest() = ExerciseListByGroup("Chest")
+    fun Chest() = ExerciseListByGroup(MuscleGroup.CHEST)
 
     @Composable
-    fun Back() = ExerciseListByGroup("Back")
+    fun Back() = ExerciseListByGroup(MuscleGroup.BACK)
 
     @Composable
-    fun Legs() = ExerciseListByGroup("Legs")
+    fun Legs() = ExerciseListByGroup(MuscleGroup.LEGS)
 
     @Composable
-    fun Shoulders() = ExerciseListByGroup("Shoulders")
+    fun Shoulders() = ExerciseListByGroup(MuscleGroup.SHOULDERS)
 
     @Composable
-    fun Arms() = ExerciseListByGroup("Arms")
+    fun Arms() = ExerciseListByGroup(MuscleGroup.ARMS)
 
     @Composable
-    fun Core() = ExerciseListByGroup("Core")
-
-    @Composable
-    fun Cardio() = ExerciseListByGroup("Cardio")
+    fun Core() = ExerciseListByGroup(MuscleGroup.CORE)
 }
