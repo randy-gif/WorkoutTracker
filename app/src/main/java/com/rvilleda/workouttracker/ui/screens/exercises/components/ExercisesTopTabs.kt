@@ -18,30 +18,22 @@ enum class ExercisesTabs(val route: String, val label: String) {
     CORE("core", "Core"),
 }
 
-@Composable
-fun TabRowHeader(navController: NavHostController, currentRoute: String?) {
-    val selectedIndex = ExercisesTabs.entries.indexOfFirst { it.route == currentRoute }.coerceAtLeast(0)
 
+@Composable
+fun TabRowHeader(
+    currentTab: ExercisesTabs,
+    onTabSelected: (ExercisesTabs) -> Unit
+) {
     ScrollableTabRow(
-        selectedTabIndex = selectedIndex,
-        modifier = Modifier.fillMaxWidth(),
-        edgePadding = 6.dp
+        selectedTabIndex = currentTab.ordinal,
+        edgePadding = 8.dp
     ) {
-        ExercisesTabs.entries.forEachIndexed { index, tab ->
+        // We loop through all the options in your Enum to build the tabs
+        ExercisesTabs.entries.forEach { tab ->
             Tab(
-                selected = index == selectedIndex,
-                onClick = {
-                    if (currentRoute != tab.route) {
-                        navController.navigate(tab.route) {
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                },
-                text = { Text(tab.label) }
+                selected = currentTab == tab,
+                onClick = { onTabSelected(tab) },
+                text = { Text(text = tab.name) }
             )
         }
     }

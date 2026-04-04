@@ -4,45 +4,65 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.rvilleda.workouttracker.model.MuscleGroup
 import com.rvilleda.workouttracker.model.allExercises
 import com.rvilleda.workouttracker.ui.components.ExerciseCard
-import com.rvilleda.workouttracker.model.MuscleGroup
 
 object ExercisesTabContent {
+
     @Composable
-    private fun ExerciseListByGroup(muscleGroupName: MuscleGroup) {
-        val filteredExercises = allExercises.filter { it.muscleGroup == muscleGroupName }
+    private fun ExerciseListByGroup(
+        muscleGroupName: MuscleGroup,
+        searchQuery: String,
+        onExerciseSelected: (String, String) -> Unit
+    ) {
+        val filteredExercises = allExercises.filter { exercise ->
+            exercise.muscleGroup == muscleGroupName &&
+                    exercise.name.contains(searchQuery, ignoreCase = true)
+        }
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(filteredExercises.size) { index ->
+
+            items(filteredExercises, key = { it.id }) { exercise ->
                 ExerciseCard(
-                    exercise = filteredExercises[index],
-                    onClick = { /* Handle exercise card click */ }
+                    exercise = exercise,
+                    onClick = {
+                        onExerciseSelected(exercise.id, exercise.name)
+                    }
                 )
             }
         }
     }
-    @Composable
-    fun Chest() = ExerciseListByGroup(MuscleGroup.CHEST)
 
     @Composable
-    fun Back() = ExerciseListByGroup(MuscleGroup.BACK)
+    fun Chest(searchQuery: String, onNavigate: (String, String) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.CHEST, searchQuery, onNavigate)
 
     @Composable
-    fun Legs() = ExerciseListByGroup(MuscleGroup.LEGS)
+    fun Back(searchQuery: String, onNavigate: (String, String) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.BACK, searchQuery, onNavigate)
 
     @Composable
-    fun Shoulders() = ExerciseListByGroup(MuscleGroup.SHOULDERS)
+    fun Legs(searchQuery: String, onNavigate: (String, String) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.LEGS, searchQuery, onNavigate)
 
     @Composable
-    fun Arms() = ExerciseListByGroup(MuscleGroup.ARMS)
+    fun Shoulders(searchQuery: String, onNavigate: (String, String) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.SHOULDERS, searchQuery, onNavigate)
 
     @Composable
-    fun Core() = ExerciseListByGroup(MuscleGroup.CORE)
+    fun Arms(searchQuery: String, onNavigate: (String, String) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.ARMS, searchQuery, onNavigate)
+
+    @Composable
+    fun Core(searchQuery: String, onNavigate: (String, String) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.CORE, searchQuery, onNavigate)
 }
