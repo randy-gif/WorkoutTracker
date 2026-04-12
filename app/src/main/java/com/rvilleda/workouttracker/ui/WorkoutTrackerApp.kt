@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -17,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.rvilleda.workouttracker.data.database.WorkoutDao
 import com.rvilleda.workouttracker.ui.navigation.AppDestinations
 import com.rvilleda.workouttracker.ui.navigation.AppRoutes
 import com.rvilleda.workouttracker.ui.screens.activeworkout.ActiveWorkoutScreen
@@ -24,9 +26,10 @@ import com.rvilleda.workouttracker.ui.screens.activeworkout.ActiveWorkoutViewMod
 import com.rvilleda.workouttracker.ui.screens.data.ExercisesDataScreen
 import com.rvilleda.workouttracker.ui.screens.exercises.ExercisesScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeScreen
+import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 
 @Composable
-fun WorkoutTrackerApp() {
+fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
 
     val navController = rememberNavController()
 
@@ -55,7 +58,18 @@ fun WorkoutTrackerApp() {
                 }
             ) {
                 when (currentDestination) {
-                    AppDestinations.HOME -> HomeScreen()
+                    AppDestinations.HOME -> {
+                        // 1. Build the HomeViewModel using a factory to pass the DAO
+                        val homeViewModel: HomeViewModel = viewModel(
+                            factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                    return HomeViewModel(workoutDao) as T
+                                }
+                            }
+                        )
+
+                        HomeScreen(viewModel = homeViewModel)
+                    }
 
                     AppDestinations.EXERCISES -> ExercisesScreen(
                         onExerciseSelected = { exerciseId, exerciseName ->
@@ -92,7 +106,14 @@ fun WorkoutTrackerApp() {
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry("workout_session_folder")
                 }
-                val sharedViewModel: ActiveWorkoutViewModel = viewModel(parentEntry)
+                val sharedViewModel: ActiveWorkoutViewModel = viewModel(
+                    parentEntry,
+                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return ActiveWorkoutViewModel(workoutDao) as T
+                        }
+                    }
+                )
 
                 val exerciseId = backStackEntry.arguments?.getString("exerciseId") ?: ""
                 val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: ""
@@ -107,6 +128,7 @@ fun WorkoutTrackerApp() {
                     },
                     onFinishWorkout = {
                         // Destroy the folder and go back to the main app
+                        sharedViewModel.saveWorkout()
                         navController.popBackStack("main_bottom_nav_flow", inclusive = false)
                     }
                 )
@@ -119,7 +141,14 @@ fun WorkoutTrackerApp() {
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry("workout_session_folder")
                 }
-                val sharedViewModel: ActiveWorkoutViewModel = viewModel(parentEntry)
+                val sharedViewModel: ActiveWorkoutViewModel = viewModel(
+                    parentEntry,
+                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return ActiveWorkoutViewModel(workoutDao) as T
+                        }
+                    }
+                )
 
                 // 3. Reuse your ExercisesScreen, but change what the click does!
                 ExercisesScreen(

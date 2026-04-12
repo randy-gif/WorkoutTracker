@@ -1,6 +1,8 @@
 package com.rvilleda.workouttracker.ui.screens.activeworkout
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import com.rvilleda.workouttracker.model.ExerciseSet
@@ -8,8 +10,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.util.UUID
+import com.rvilleda.workouttracker.data.database.WorkoutDao
+import com.rvilleda.workouttracker.data.database.CompletedWorkoutEntity
 
-class ActiveWorkoutViewModel : ViewModel() {
+
+class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     // Now holding a list of Exercises instead of just Sets
     private val _activeExercises = MutableStateFlow<List<ExerciseInSession>>(emptyList())
@@ -62,4 +69,20 @@ class ActiveWorkoutViewModel : ViewModel() {
             }
         }
     }
+
+    fun saveWorkout() {
+        viewModelScope.launch {
+
+            val jsonString = Gson().toJson(_activeExercises.value)
+
+            val newEntity = CompletedWorkoutEntity(
+                id = UUID.randomUUID().toString(),
+                dateCompleted = System.currentTimeMillis(),
+                exercisesJson = jsonString
+            )
+
+            workoutDao.insertWorkout(newEntity)
+        }
+    }
+
 }
