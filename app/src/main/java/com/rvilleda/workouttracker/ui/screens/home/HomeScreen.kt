@@ -13,6 +13,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -28,7 +29,10 @@ import com.rvilleda.workouttracker.ui.screens.home.components.TopTabs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(viewModel: HomeViewModel) {
+
+    val workouts by viewModel.savedWorkouts.collectAsState()
+
     val topBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topBarState)
 
@@ -78,7 +82,7 @@ fun HomeScreen() {
                 modifier = Modifier.padding(padding)
             ) {
                 composable(TopTab.FOR_YOU.route) {
-                    ForYouTab()
+                    ForYouTab(workouts)
                 }
                 composable(TopTab.TOP_EXERCISES.route) {
                     PlaceholderTab("Top Exercises Content")
