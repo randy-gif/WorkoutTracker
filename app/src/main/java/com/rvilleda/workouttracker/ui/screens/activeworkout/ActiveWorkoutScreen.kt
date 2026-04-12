@@ -35,50 +35,48 @@ fun ActiveWorkoutScreen(
             )
         }
     }
+    Scaffold(
+        modifier = Modifier,
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                items(activeExercises, key = { it.id }) { exercise ->
+                    ActiveExerciseCard(
+                        exercise = exercise,
+                        onAddSet = { viewModel.addSetToExercise(exercise.id) },
+                        onUpdateSet = { setId, weight, reps ->
+                            viewModel.updateSet(exercise.id, setId, weight, reps)
+                        },
+                        onRemoveSet = { setId ->
+                            viewModel.removeSet(exercise.id, setId)
+                        }
+                    )
+                }
 
-        Text(
-            text = "Active Workout",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            items(activeExercises, key = { it.id }) { exercise ->
-                ActiveExerciseCard(
-                    exercise = exercise,
-                    onAddSet = { viewModel.addSetToExercise(exercise.id) },
-                    onUpdateSet = { setId, weight, reps ->
-                        viewModel.updateSet(exercise.id, setId, weight, reps)
-                    },
-                    onRemoveSet = { setId ->
-                        viewModel.removeSet(exercise.id, setId)
+                item {
+                    OutlinedButton(
+                        onClick = onNavigateToExerciseSelection,
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+                    ) {
+                        Text("+ Add Another Exercise")
                     }
-                )
-            }
-
-            item {
-                OutlinedButton(
-                    onClick = onNavigateToExerciseSelection,
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-                ) {
-                    Text("+ Add Another Exercise")
                 }
             }
-        }
 
-        Button(
-            onClick = onFinishWorkout,
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-        ) {
-            Text("Finish & Save Workout")
+            Button(
+                onClick = onFinishWorkout,
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            ){
+                Text("Finish & Save Workout")
+            }
         }
     }
 }
+
 
 @Composable
 fun ActiveExerciseCard(

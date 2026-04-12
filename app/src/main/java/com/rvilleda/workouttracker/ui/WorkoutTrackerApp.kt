@@ -6,22 +6,25 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navigation
 import com.rvilleda.workouttracker.ui.navigation.AppDestinations
 import com.rvilleda.workouttracker.ui.navigation.AppRoutes
 import com.rvilleda.workouttracker.ui.screens.activeworkout.ActiveWorkoutScreen
+import com.rvilleda.workouttracker.ui.screens.activeworkout.ActiveWorkoutViewModel
 import com.rvilleda.workouttracker.ui.screens.data.ExercisesDataScreen
 import com.rvilleda.workouttracker.ui.screens.exercises.ExercisesScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeScreen
-@Preview(showBackground = true)
+
 @Composable
 fun WorkoutTrackerApp() {
 
@@ -32,9 +35,11 @@ fun WorkoutTrackerApp() {
         startDestination = "main_bottom_nav_flow"
     ) {
 
+        // ====================================================
+        // FOLDER 1: THE MAIN APP (Bottom Bar)
+        // ====================================================
         composable("main_bottom_nav_flow") {
 
-            // Your state management for the bottom bar stays safely inside here
             var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
 
             NavigationSuiteScaffold(
@@ -49,13 +54,12 @@ fun WorkoutTrackerApp() {
                     }
                 }
             ) {
-                // Switching between the main rooms
                 when (currentDestination) {
                     AppDestinations.HOME -> HomeScreen()
 
                     AppDestinations.EXERCISES -> ExercisesScreen(
-                        // The Waiter passes the order to the Building Manager!
                         onExerciseSelected = { exerciseId, exerciseName ->
+                            // This starts a BRAND NEW workout
                             navController.navigate(
                                 AppRoutes.createActiveWorkoutRoute(exerciseId, exerciseName)
                             )
@@ -67,27 +71,67 @@ fun WorkoutTrackerApp() {
             }
         }
 
-        composable(
-            route = AppRoutes.ACTIVE_WORKOUT,
-            arguments = listOf(
-                navArgument("exerciseId") { type = NavType.StringType },
-                navArgument("exerciseName") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
+        // ====================================================
+        // FOLDER 2: THE ACTIVE WORKOUT (Nested Graph)
+        // ====================================================
+        navigation(
+            startDestination = AppRoutes.ACTIVE_WORKOUT,
+            route = "workout_session_folder" // The name of our "Conference Room"
+        ) {
 
-            val exerciseId = backStackEntry.arguments?.getString("exerciseId") ?: ""
-            val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: ""
+            // SCREEN A: The actual workout screen
+            composable(
+                route = AppRoutes.ACTIVE_WORKOUT,
+                arguments = listOf(
+                    navArgument("exerciseId") { type = NavType.StringType },
+                    navArgument("exerciseName") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
 
-            ActiveWorkoutScreen(
-                exerciseId = exerciseId,
-                exerciseName = exerciseName,
-                onNavigateToExerciseSelection = {
-                    navController.popBackStack()
-                },
-                onFinishWorkout = {
-                    navController.popBackStack("main_bottom_nav_flow", inclusive = false)
+                // 1. Get the shared ViewModel tied to this folder
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("workout_session_folder")
                 }
-            )
+                val sharedViewModel: ActiveWorkoutViewModel = viewModel(parentEntry)
+
+                val exerciseId = backStackEntry.arguments?.getString("exerciseId") ?: ""
+                val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: ""
+
+                ActiveWorkoutScreen(
+                    exerciseId = exerciseId,
+                    exerciseName = exerciseName,
+                    viewModel = sharedViewModel, // Pass it to the screen
+                    onNavigateToExerciseSelection = {
+                        // Navigate to Screen B (inside this folder)
+                        navController.navigate("add_exercise_to_workout")
+                    },
+                    onFinishWorkout = {
+                        // Destroy the folder and go back to the main app
+                        navController.popBackStack("main_bottom_nav_flow", inclusive = false)
+                    }
+                )
+            }
+
+            // SCREEN B: The "Add Another Exercise" screen
+            composable("add_exercise_to_workout") { backStackEntry ->
+
+                // 2. Grab the EXACT same ViewModel from the folder
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("workout_session_folder")
+                }
+                val sharedViewModel: ActiveWorkoutViewModel = viewModel(parentEntry)
+
+                // 3. Reuse your ExercisesScreen, but change what the click does!
+                ExercisesScreen(
+                    onExerciseSelected = { newExerciseId, newExerciseName ->
+                        // Add the exercise to the existing ViewModel
+                        sharedViewModel.addExerciseToSession(newExerciseId, newExerciseName)
+
+                        // Go back to the workout screen
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     }
 }
