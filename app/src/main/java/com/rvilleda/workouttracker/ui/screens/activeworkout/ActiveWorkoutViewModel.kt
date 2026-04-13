@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import com.rvilleda.workouttracker.data.database.WorkoutDao
 import com.rvilleda.workouttracker.data.database.CompletedWorkoutEntity
+import kotlinx.coroutines.delay
 
 
 class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
@@ -22,6 +23,38 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     private val _activeExercises = MutableStateFlow<List<ExerciseInSession>>(emptyList())
     val activeExercises: StateFlow<List<ExerciseInSession>> = _activeExercises.asStateFlow()
 
+    private val startTime = System.currentTimeMillis()
+
+    private val _elapsedTime = MutableStateFlow("00:00")
+    val elapsedTime: StateFlow<String> = _elapsedTime.asStateFlow()
+
+    init {
+        startTimer()
+    }
+
+    private fun startTimer() {
+        viewModelScope.launch {
+            while (true) {
+                // Calculate how much time has passed
+                val currentMs = System.currentTimeMillis()
+                val diff = currentMs - startTime
+
+                val seconds = (diff / 1000) % 60
+                val minutes = (diff / (1000 * 60)) % 60
+                val hours = (diff / (1000 * 60 * 60))
+
+                // Format it nicely like a digital clock
+                _elapsedTime.value = if (hours > 0) {
+                    String.format("%d:%02d:%02d", hours, minutes, seconds)
+                } else {
+                    String.format("%02d:%02d", minutes, seconds)
+                }
+
+                // Wait exactly 1 second, then loop again
+                delay(1000L)
+            }
+        }
+    }
     fun addExerciseToSession(baseExerciseId: String, exerciseName: String) {
         _activeExercises.update { currentExercises ->
             currentExercises + ExerciseInSession(
@@ -78,6 +111,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             val newEntity = CompletedWorkoutEntity(
                 id = UUID.randomUUID().toString(),
                 dateCompleted = System.currentTimeMillis(),
+                durationMs = System.currentTimeMillis() - startTime,
                 exercisesJson = jsonString
             )
 

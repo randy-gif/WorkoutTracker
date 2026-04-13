@@ -16,18 +16,16 @@ import com.rvilleda.workouttracker.model.ExerciseSet
 
 @Composable
 fun ActiveWorkoutScreen(
-    exerciseId: String,   // NEW: Passed from your navigation arguments
-    exerciseName: String, // NEW: Passed from your navigation arguments
+    exerciseId: String,
+    exerciseName: String,
     onNavigateToExerciseSelection: () -> Unit,
     onFinishWorkout: () -> Unit,
     viewModel: ActiveWorkoutViewModel = viewModel()
 ) {
     val activeExercises by viewModel.activeExercises.collectAsState()
+    val timerText by viewModel.elapsedTime.collectAsState()
 
-    // NEW: This block runs exactly ONCE when the screen first opens.
     LaunchedEffect(Unit) {
-        // We check if the list is empty so we don't overwrite an existing
-        // session if the user navigated away and came back.
         if (viewModel.activeExercises.value.isEmpty()) {
             viewModel.addExerciseToSession(
                 baseExerciseId = exerciseId,
@@ -40,6 +38,14 @@ fun ActiveWorkoutScreen(
 
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            Text(
+                text = timerText,
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(16.dp)
+            )
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(24.dp)

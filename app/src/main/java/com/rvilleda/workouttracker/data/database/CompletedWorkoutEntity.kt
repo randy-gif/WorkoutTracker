@@ -5,9 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "completed_workouts")
 data class CompletedWorkoutEntity(
-    @PrimaryKey val id: String, // Room uses this to ensure no duplicates
+    @PrimaryKey val id: String,
     val dateCompleted: Long,
-
-    // We will convert your List<ActiveExercise> into a JSON string to save it easily
+    val durationMs: Long,
     val exercisesJson: String
 )
