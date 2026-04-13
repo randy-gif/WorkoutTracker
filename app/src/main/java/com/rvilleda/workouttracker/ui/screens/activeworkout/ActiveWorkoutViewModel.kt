@@ -25,7 +25,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     private val _isWorkoutActive = MutableStateFlow(false)
     val isWorkoutActive: StateFlow<Boolean> = _isWorkoutActive.asStateFlow()
 
-    private val startTime = System.currentTimeMillis()
+    private var startTime = System.currentTimeMillis()
     private val _elapsedTime = MutableStateFlow("00:00")
     val elapsedTime: StateFlow<String> = _elapsedTime.asStateFlow()
 
@@ -36,22 +36,22 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     private fun startTimer() {
         viewModelScope.launch {
             while (true) {
-                // Calculate how much time has passed
-                val currentMs = System.currentTimeMillis()
-                val diff = currentMs - startTime
+                if (_isWorkoutActive.value) {
+                    val currentMs = System.currentTimeMillis()
+                    val diff = currentMs - startTime
 
-                val seconds = (diff / 1000) % 60
-                val minutes = (diff / (1000 * 60)) % 60
-                val hours = (diff / (1000 * 60 * 60))
+                    val seconds = (diff / 1000) % 60
+                    val minutes = (diff / (1000 * 60)) % 60
+                    val hours = (diff / (1000 * 60 * 60))
 
-                // Format it nicely like a digital clock
-                _elapsedTime.value = if (hours > 0) {
-                    String.format("%d:%02d:%02d", hours, minutes, seconds)
+                    _elapsedTime.value = if (hours > 0) {
+                        String.format("%d:%02d:%02d", hours, minutes, seconds)
+                    } else {
+                        String.format("%02d:%02d", minutes, seconds)
+                    }
                 } else {
-                    String.format("%02d:%02d", minutes, seconds)
+                    _elapsedTime.value = "00:00"
                 }
-
-                // Wait exactly 1 second, then loop again
                 delay(1000L)
             }
         }
@@ -59,6 +59,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     fun startNewWorkout(firstExerciseId: String, firstExerciseName: String) {
         if (_isWorkoutActive.value) return
         _activeExercises.value = emptyList()
+        startTime = System.currentTimeMillis()
         _isWorkoutActive.value = true
         addExerciseToSession(firstExerciseId, firstExerciseName)
     }
