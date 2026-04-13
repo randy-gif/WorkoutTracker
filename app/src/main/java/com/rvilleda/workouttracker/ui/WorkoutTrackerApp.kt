@@ -4,6 +4,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,27 +21,33 @@ import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.rvilleda.workouttracker.data.database.WorkoutDao
 import com.rvilleda.workouttracker.ui.navigation.AppDestinations
-import com.rvilleda.workouttracker.ui.navigation.AppRoutes
 import com.rvilleda.workouttracker.ui.screens.activeworkout.ActiveWorkoutScreen
 import com.rvilleda.workouttracker.ui.screens.activeworkout.ActiveWorkoutViewModel
 import com.rvilleda.workouttracker.ui.screens.data.ExercisesDataScreen
 import com.rvilleda.workouttracker.ui.screens.exercises.ExercisesScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
+import com.rvilleda.workouttracker.R
 
 @Composable
 fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
 
     val navController = rememberNavController()
 
+    val sharedActiveWorkoutViewModel: ActiveWorkoutViewModel = viewModel(
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return ActiveWorkoutViewModel(workoutDao) as T
+            }
+        }
+    )
+    val isWorkoutActive by sharedActiveWorkoutViewModel.isWorkoutActive.collectAsState()
+
     NavHost(
         navController = navController,
         startDestination = "main_bottom_nav_flow"
     ) {
 
-        // ====================================================
-        // FOLDER 1: THE MAIN APP (Bottom Bar)
-        // ====================================================
         composable("main_bottom_nav_flow") {
 
             var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
@@ -55,11 +62,20 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                             onClick = { currentDestination = it }
                         )
                     }
+                    if (isWorkoutActive) {
+                        item(
+                            icon = { Icon(painterResource(R.drawable.ic_timer), contentDescription = "Active") },
+                            label = { Text("Active") },
+                            selected = false,
+                            onClick = {
+                                navController.navigate("active_workout_screen")
+                            }
+                        )
+                    }
                 }
             ) {
                 when (currentDestination) {
                     AppDestinations.HOME -> {
-                        // 1. Build the HomeViewModel using a factory to pass the DAO
                         val homeViewModel: HomeViewModel = viewModel(
                             factory = object : androidx.lifecycle.ViewModelProvider.Factory {
                                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -73,10 +89,12 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
 
                     AppDestinations.EXERCISES -> ExercisesScreen(
                         onExerciseSelected = { exerciseId, exerciseName ->
-                            // This starts a BRAND NEW workout
-                            navController.navigate(
-                                AppRoutes.createActiveWorkoutRoute(exerciseId, exerciseName)
-                            )
+                            if(isWorkoutActive){
+                                sharedActiveWorkoutViewModel.addExerciseToSession(exerciseId, exerciseName)
+                            }else {
+                                sharedActiveWorkoutViewModel.startNewWorkout(exerciseId, exerciseName)
+                            }
+                            navController.navigate("active_workout_screen")
                         }
                     )
 
@@ -85,82 +103,27 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
             }
         }
 
-        // ====================================================
-        // FOLDER 2: THE ACTIVE WORKOUT (Nested Graph)
-        // ====================================================
-        navigation(
-            startDestination = AppRoutes.ACTIVE_WORKOUT,
-            route = "workout_session_folder" // The name of our "Conference Room"
-        ) {
+        composable("active_workout_screen") {
 
-            // SCREEN A: The actual workout screen
-            composable(
-                route = AppRoutes.ACTIVE_WORKOUT,
-                arguments = listOf(
-                    navArgument("exerciseId") { type = NavType.StringType },
-                    navArgument("exerciseName") { type = NavType.StringType }
-                )
-            ) { backStackEntry ->
-
-                // 1. Get the shared ViewModel tied to this folder
-                val parentEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry("workout_session_folder")
+            ActiveWorkoutScreen(
+                viewModel = sharedActiveWorkoutViewModel,
+                onNavigateToExerciseSelection = {
+                    navController.navigate("add_exercise_to_workout")
+                },
+                onFinishWorkout = {
+                    sharedActiveWorkoutViewModel.finishAndClearWorkout()
+                    navController.popBackStack("main_bottom_nav_flow", inclusive = false)
                 }
-                val sharedViewModel: ActiveWorkoutViewModel = viewModel(
-                    parentEntry,
-                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            return ActiveWorkoutViewModel(workoutDao) as T
-                        }
-                    }
-                )
+            )
+        }
 
-                val exerciseId = backStackEntry.arguments?.getString("exerciseId") ?: ""
-                val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: ""
-
-                ActiveWorkoutScreen(
-                    exerciseId = exerciseId,
-                    exerciseName = exerciseName,
-                    viewModel = sharedViewModel, // Pass it to the screen
-                    onNavigateToExerciseSelection = {
-                        // Navigate to Screen B (inside this folder)
-                        navController.navigate("add_exercise_to_workout")
-                    },
-                    onFinishWorkout = {
-                        // Destroy the folder and go back to the main app
-                        sharedViewModel.saveWorkout()
-                        navController.popBackStack("main_bottom_nav_flow", inclusive = false)
-                    }
-                )
-            }
-
-            // SCREEN B: The "Add Another Exercise" screen
-            composable("add_exercise_to_workout") { backStackEntry ->
-
-                // 2. Grab the EXACT same ViewModel from the folder
-                val parentEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry("workout_session_folder")
+        composable("add_exercise_to_workout") {
+            ExercisesScreen(
+                onExerciseSelected = { newExerciseId, newExerciseName ->
+                    sharedActiveWorkoutViewModel.addExerciseToSession(newExerciseId, newExerciseName)
+                    navController.popBackStack()
                 }
-                val sharedViewModel: ActiveWorkoutViewModel = viewModel(
-                    parentEntry,
-                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            return ActiveWorkoutViewModel(workoutDao) as T
-                        }
-                    }
-                )
-
-                // 3. Reuse your ExercisesScreen, but change what the click does!
-                ExercisesScreen(
-                    onExerciseSelected = { newExerciseId, newExerciseName ->
-                        // Add the exercise to the existing ViewModel
-                        sharedViewModel.addExerciseToSession(newExerciseId, newExerciseName)
-
-                        // Go back to the workout screen
-                        navController.popBackStack()
-                    }
-                )
-            }
+            )
         }
     }
 }

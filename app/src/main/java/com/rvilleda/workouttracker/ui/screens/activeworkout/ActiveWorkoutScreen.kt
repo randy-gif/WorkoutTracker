@@ -16,8 +16,6 @@ import com.rvilleda.workouttracker.model.ExerciseSet
 
 @Composable
 fun ActiveWorkoutScreen(
-    exerciseId: String,
-    exerciseName: String,
     onNavigateToExerciseSelection: () -> Unit,
     onFinishWorkout: () -> Unit,
     viewModel: ActiveWorkoutViewModel = viewModel()
@@ -25,14 +23,7 @@ fun ActiveWorkoutScreen(
     val activeExercises by viewModel.activeExercises.collectAsState()
     val timerText by viewModel.elapsedTime.collectAsState()
 
-    LaunchedEffect(Unit) {
-        if (viewModel.activeExercises.value.isEmpty()) {
-            viewModel.addExerciseToSession(
-                baseExerciseId = exerciseId,
-                exerciseName = exerciseName
-            )
-        }
-    }
+
     Scaffold(
         modifier = Modifier,
 

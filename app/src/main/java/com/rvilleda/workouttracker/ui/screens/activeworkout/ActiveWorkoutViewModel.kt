@@ -19,12 +19,13 @@ import kotlinx.coroutines.delay
 
 class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
-    // Now holding a list of Exercises instead of just Sets
     private val _activeExercises = MutableStateFlow<List<ExerciseInSession>>(emptyList())
     val activeExercises: StateFlow<List<ExerciseInSession>> = _activeExercises.asStateFlow()
 
-    private val startTime = System.currentTimeMillis()
+    private val _isWorkoutActive = MutableStateFlow(false)
+    val isWorkoutActive: StateFlow<Boolean> = _isWorkoutActive.asStateFlow()
 
+    private val startTime = System.currentTimeMillis()
     private val _elapsedTime = MutableStateFlow("00:00")
     val elapsedTime: StateFlow<String> = _elapsedTime.asStateFlow()
 
@@ -54,6 +55,17 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
                 delay(1000L)
             }
         }
+    }
+    fun startNewWorkout(firstExerciseId: String, firstExerciseName: String) {
+        if (_isWorkoutActive.value) return
+        _activeExercises.value = emptyList()
+        _isWorkoutActive.value = true
+        addExerciseToSession(firstExerciseId, firstExerciseName)
+    }
+    fun finishAndClearWorkout() {
+        saveWorkout() // Save it to the database
+        _isWorkoutActive.value = false // Hide the bottom tab
+        _activeExercises.value = emptyList() // Wipe the memory
     }
     fun addExerciseToSession(baseExerciseId: String, exerciseName: String) {
         _activeExercises.update { currentExercises ->
