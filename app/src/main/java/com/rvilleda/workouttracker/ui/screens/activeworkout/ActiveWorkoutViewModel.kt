@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import com.rvilleda.workouttracker.data.database.WorkoutDao
 import com.rvilleda.workouttracker.data.database.CompletedWorkoutEntity
+import com.rvilleda.workouttracker.model.WeightUnit
 import kotlinx.coroutines.delay
 
 
@@ -24,6 +25,9 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     private val _isWorkoutActive = MutableStateFlow(false)
     val isWorkoutActive: StateFlow<Boolean> = _isWorkoutActive.asStateFlow()
+
+    private val _preferredUnit = MutableStateFlow(WeightUnit.LBS)
+    val preferredUnit: StateFlow<WeightUnit> = _preferredUnit.asStateFlow()
 
     private var startTime = System.currentTimeMillis()
     private val _elapsedTime = MutableStateFlow("00:00")
@@ -95,16 +99,21 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         }
     }
 
-    fun addSetToExercise(workoutExerciseId: String) {
-        _activeExercises.update { currentExercises ->
-            currentExercises.map { exercise ->
-                if (exercise.id == workoutExerciseId) {
-                    exercise.copy(sets = exercise.sets + ExerciseSet())
-                } else {
-                    exercise
-                }
-            }
+    fun addSetToExercise(exerciseId: String) {
+        val currentUnit = _preferredUnit.value
+
+        val updatedExercises = _activeExercises.value.map { exercise ->
+            if (exercise.id == exerciseId) {
+                val newSet = ExerciseSet(
+                    id = UUID.randomUUID().toString(),
+                    weight = "",
+                    reps = "",
+                    weightUnit = currentUnit
+                )
+                exercise.copy(sets = exercise.sets + newSet)
+            } else exercise
         }
+        _activeExercises.value = updatedExercises
     }
 
     fun updateSet(workoutExerciseId: String, setId: String, weight: String, reps: String) {
@@ -132,6 +141,64 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
                 }
             }
         }
+    }
+
+    fun toggleUnit() {
+        _preferredUnit.value = if (_preferredUnit.value == WeightUnit.LBS) WeightUnit.KG else WeightUnit.LBS
+    }
+
+    // 2. DELETE ENTIRE EXERCISE
+    fun removeExerciseFromSession(exerciseId: String) {
+        _activeExercises.value = _activeExercises.value.filterNot { it.id == exerciseId }
+    }
+
+    // 3. REARRANGE EXERCISES (Move Up / Down)
+    fun moveExerciseUp(exerciseId: String) {
+        val currentList = _activeExercises.value.toMutableList()
+        val index = currentList.indexOfFirst { it.id == exerciseId }
+        if (index > 0) {
+            val item = currentList.removeAt(index)
+            currentList.add(index - 1, item)
+            _activeExercises.value = currentList
+        }
+    }
+
+    fun moveExerciseDown(exerciseId: String) {
+        val currentList = _activeExercises.value.toMutableList()
+        val index = currentList.indexOfFirst { it.id == exerciseId }
+        if (index >= 0 && index < currentList.size - 1) {
+            val item = currentList.removeAt(index)
+            currentList.add(index + 1, item)
+            _activeExercises.value = currentList
+        }
+    }
+
+    // 4. COMPLETE SET & TRIGGER TIMER
+    fun toggleSetCompletion(exerciseId: String, setId: String) {
+        val updatedExercises = _activeExercises.value.map { exercise ->
+            if (exercise.id == exerciseId) {
+                val updatedSets = exercise.sets.map { set ->
+                    if (set.id == setId) {
+                        val newCompletionStatus = !set.isCompleted
+
+                        // IF IT WAS JUST COMPLETED, START THE REST TIMER!
+                        if (newCompletionStatus) {
+                            startRestTimer()
+                        }
+
+                        set.copy(isCompleted = newCompletionStatus)
+                    } else set
+                }
+                exercise.copy(sets = updatedSets)
+            } else exercise
+        }
+        _activeExercises.value = updatedExercises
+    }
+
+    // Placeholder for the timer we will build next!
+    private fun startRestTimer() {
+        // TODO: Build the rest timer countdown logic
+        println("Rest Timer Started!")
     }
 
     fun saveWorkout() {
