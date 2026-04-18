@@ -101,7 +101,8 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                                 sharedActiveWorkoutViewModel.startNewWorkout(exerciseId, exerciseName)
                             }
                             navController.navigate("active_workout_screen")
-                        }
+                        },
+                        onBack = { currentDestination = AppDestinations.HOME }
                     )
 
                     AppDestinations.EXERCISES_DATA -> ExercisesDataScreen()
@@ -131,7 +132,8 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                 onExerciseSelected = { newExerciseId, newExerciseName ->
                     sharedActiveWorkoutViewModel.addExerciseToSession(newExerciseId, newExerciseName)
                     navController.popBackStack()
-                }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 

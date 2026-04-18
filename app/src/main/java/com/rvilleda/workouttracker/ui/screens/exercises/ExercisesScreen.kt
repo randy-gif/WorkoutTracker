@@ -3,6 +3,7 @@ package com.rvilleda.workouttracker.ui.screens.exercises
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,7 +19,8 @@ import com.rvilleda.workouttracker.ui.screens.exercises.tabs.ExercisesTabContent
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExercisesScreen(
-    onExerciseSelected: (String, String) -> Unit
+    onExerciseSelected: (String, String) -> Unit,
+    onBack: () -> Unit
 ) {
     val topBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topBarState)
@@ -44,10 +46,9 @@ fun ExercisesScreen(
                         )
                     },
                     navigationIcon = {
-                        Image(
-                            painter = painterResource(R.drawable.workout_tracker_logo),
-                            contentDescription = "Logo"
-                        )
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        }
                     },
                     scrollBehavior = scrollBehavior
                 )
