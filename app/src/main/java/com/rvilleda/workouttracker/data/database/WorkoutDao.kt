@@ -19,4 +19,7 @@ interface WorkoutDao {
 
     @Query("SELECT * FROM completed_workouts WHERE id = :workoutId LIMIT 1")
     suspend fun getWorkoutById(workoutId: String): CompletedWorkoutEntity?
+
+    @Query("DELETE FROM completed_workouts WHERE id = :workoutId")
+    suspend fun deleteWorkout(workoutId: String)
 }

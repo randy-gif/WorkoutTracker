@@ -3,6 +3,7 @@ package com.rvilleda.workouttracker.ui.screens.home
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +29,10 @@ import java.util.Date
 import java.util.Locale
 import kotlin.collections.joinToString
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.res.painterResource
+import com.rvilleda.workouttracker.R
 import com.google.gson.reflect.TypeToken
 
 
@@ -35,7 +40,8 @@ import com.google.gson.reflect.TypeToken
 @Composable
 fun ForYouTab(
     workouts: List<CompletedWorkoutEntity>,
-    onPastWorkoutClick: (String) -> Unit
+    onPastWorkoutClick: (String) -> Unit,
+    onDeleteClick: (String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text(
@@ -57,31 +63,47 @@ fun ForYouTab(
                 val dateFormatted = SimpleDateFormat("MMM dd, yyyy - h:mm a", Locale.getDefault())
                     .format(Date(workoutEntity.dateCompleted))
 
-                // 5. Draw a simple card for each workout
+                val exerciseNames = exercises.joinToString { it.exerciseName }
+
                 Card(
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onPastWorkoutClick(workoutEntity.id) }
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = dateFormatted, style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
 
-                        Text(text = "Total Exercises: ${exercises.size}")
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = dateFormatted, style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(text = "Total Exercises: ${exercises.size}")
+                            Text(
+                                text = exerciseNames,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
 
-                        val exerciseNames = exercises.joinToString { it.exerciseName }
-                        Text(
-                            text = exerciseNames,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        IconButton(onClick = { onDeleteClick(workoutEntity.id) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_delete),
+                                contentDescription = "Delete Workout",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun PlaceholderTab(text: String) {

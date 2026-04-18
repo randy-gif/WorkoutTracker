@@ -31,7 +31,7 @@ import com.rvilleda.workouttracker.ui.screens.home.components.TopTabs
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onPastWorkoutClick: (String) -> Unit
+    onPastWorkoutClick: (String) -> Unit,
 ) {
 
     val workouts by viewModel.savedWorkouts.collectAsState()
@@ -85,7 +85,13 @@ fun HomeScreen(
                 modifier = Modifier.padding(padding)
             ) {
                 composable(TopTab.FOR_YOU.route) {
-                    ForYouTab(workouts, onPastWorkoutClick)
+                    ForYouTab(
+                        workouts,
+                        onPastWorkoutClick,
+                        onDeleteClick = { idToDelete ->
+                            viewModel.deleteWorkout(idToDelete)
+                        }
+                    )
                 }
                 composable(TopTab.TOP_EXERCISES.route) {
                     PlaceholderTab("Top Exercises Content")
