@@ -16,4 +16,7 @@ interface WorkoutDao {
     // Room automatically converts the SQL table back into a Kotlin List!
     @Query("SELECT * FROM completed_workouts ORDER BY dateCompleted DESC")
     fun getAllWorkouts(): Flow<List<CompletedWorkoutEntity>>
+
+    @Query("SELECT * FROM completed_workouts WHERE id = :workoutId LIMIT 1")
+    suspend fun getWorkoutById(workoutId: String): CompletedWorkoutEntity?
 }

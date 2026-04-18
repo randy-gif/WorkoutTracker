@@ -63,6 +63,24 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _isWorkoutActive.value = true
         addExerciseToSession(firstExerciseId, firstExerciseName)
     }
+
+    fun startWorkoutAgain(pastExercises: List<ExerciseInSession>) {
+        // Guard Clause: Don't overwrite if they are already working out!
+        if (_isWorkoutActive.value) return
+
+        val freshExercises = pastExercises.map { oldExercise ->
+            oldExercise.copy(
+                id = UUID.randomUUID().toString(), // Fresh ID
+                sets = oldExercise.sets.map { oldSet ->
+                    oldSet.copy(id = UUID.randomUUID().toString()) // Fresh ID
+                }
+            )
+        }
+
+        _activeExercises.value = freshExercises
+        _isWorkoutActive.value = true
+        startTime = System.currentTimeMillis()
+    }
     fun finishAndClearWorkout() {
         saveWorkout() // Save it to the database
         _isWorkoutActive.value = false // Hide the bottom tab

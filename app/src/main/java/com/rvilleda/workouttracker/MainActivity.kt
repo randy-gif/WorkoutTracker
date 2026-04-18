@@ -17,7 +17,9 @@ class MainActivity : ComponentActivity() {
             applicationContext,
             WorkoutDatabase::class.java,
             "workout-database"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
 
         enableEdgeToEdge()
 

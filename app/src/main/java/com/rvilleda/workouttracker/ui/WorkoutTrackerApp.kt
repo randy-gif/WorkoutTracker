@@ -28,6 +28,7 @@ import com.rvilleda.workouttracker.ui.screens.exercises.ExercisesScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 import com.rvilleda.workouttracker.R
+import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsScreen
 
 @Composable
 fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
@@ -84,7 +85,12 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                             }
                         )
 
-                        HomeScreen(viewModel = homeViewModel)
+                        HomeScreen(
+                            viewModel = homeViewModel,
+                            onPastWorkoutClick = { workoutId ->
+                                navController.navigate("workout_details_screen/$workoutId")
+                            }
+                        )
                     }
 
                     AppDestinations.EXERCISES -> ExercisesScreen(
@@ -113,6 +119,9 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                 onFinishWorkout = {
                     sharedActiveWorkoutViewModel.finishAndClearWorkout()
                     navController.popBackStack("main_bottom_nav_flow", inclusive = false)
+                },
+                onBack = {
+                    navController.popBackStack("main_bottom_nav_flow", inclusive = false)
                 }
             )
         }
@@ -122,6 +131,20 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                 onExerciseSelected = { newExerciseId, newExerciseName ->
                     sharedActiveWorkoutViewModel.addExerciseToSession(newExerciseId, newExerciseName)
                     navController.popBackStack()
+                }
+            )
+        }
+
+        composable("workout_details_screen/{workoutId}") { backStackEntry ->
+            val workoutId = backStackEntry.arguments?.getString("workoutId") ?: return@composable
+
+            WorkoutDetailsScreen(
+                workoutId = workoutId,
+                workoutDao = workoutDao,
+                onBack = { navController.popBackStack() },
+                onWorkoutAgain = { pastExercises ->
+                    sharedActiveWorkoutViewModel.startWorkoutAgain(pastExercises)
+                    navController.navigate("active_workout_screen")
                 }
             )
         }

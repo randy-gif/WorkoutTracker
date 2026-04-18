@@ -1,5 +1,6 @@
 package com.rvilleda.workouttracker.ui.screens.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -32,7 +33,10 @@ import com.google.gson.reflect.TypeToken
 
 
 @Composable
-fun ForYouTab(workouts: List<CompletedWorkoutEntity>) {
+fun ForYouTab(
+    workouts: List<CompletedWorkoutEntity>,
+    onPastWorkoutClick: (String) -> Unit
+) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text(
             text = "Recent Workouts",
@@ -56,7 +60,9 @@ fun ForYouTab(workouts: List<CompletedWorkoutEntity>) {
                 // 5. Draw a simple card for each workout
                 Card(
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onPastWorkoutClick(workoutEntity.id) }
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(text = dateFormatted, style = MaterialTheme.typography.titleMedium)

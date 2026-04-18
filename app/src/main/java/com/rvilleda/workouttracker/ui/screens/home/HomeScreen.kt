@@ -29,7 +29,10 @@ import com.rvilleda.workouttracker.ui.screens.home.components.TopTabs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel) {
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    onPastWorkoutClick: (String) -> Unit
+) {
 
     val workouts by viewModel.savedWorkouts.collectAsState()
 
@@ -82,7 +85,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 modifier = Modifier.padding(padding)
             ) {
                 composable(TopTab.FOR_YOU.route) {
-                    ForYouTab(workouts)
+                    ForYouTab(workouts, onPastWorkoutClick)
                 }
                 composable(TopTab.TOP_EXERCISES.route) {
                     PlaceholderTab("Top Exercises Content")

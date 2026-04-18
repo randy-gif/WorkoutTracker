@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,10 +16,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import com.rvilleda.workouttracker.model.ExerciseSet
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActiveWorkoutScreen(
     onNavigateToExerciseSelection: () -> Unit,
     onFinishWorkout: () -> Unit,
+    onBack: () -> Unit,
     viewModel: ActiveWorkoutViewModel = viewModel()
 ) {
     val activeExercises by viewModel.activeExercises.collectAsState()
@@ -25,6 +29,24 @@ fun ActiveWorkoutScreen(
 
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Workout Details") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                }
+            )
+        },
+        bottomBar = {
+            Button(
+                onClick = onFinishWorkout,
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            ){
+                Text("Finish & Save Workout")
+            }
+        },
         modifier = Modifier,
 
     ) { padding ->
@@ -62,13 +84,6 @@ fun ActiveWorkoutScreen(
                         Text("+ Add Another Exercise")
                     }
                 }
-            }
-
-            Button(
-                onClick = onFinishWorkout,
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-            ){
-                Text("Finish & Save Workout")
             }
         }
     }
