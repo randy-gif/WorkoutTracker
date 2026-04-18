@@ -42,7 +42,7 @@ fun ActiveWorkoutScreen(
         bottomBar = {
             Button(
                 onClick = onFinishWorkout,
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
             ){
                 Text("Finish & Save Workout")
             }
