@@ -95,6 +95,12 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _isWorkoutActive.value = false // Hide the bottom tab
         _activeExercises.value = emptyList() // Wipe the memory
     }
+
+    fun discardWorkout() {
+        _isWorkoutActive.value = false
+        _activeExercises.value = emptyList()
+    }
+
     fun addExerciseToSession(baseExerciseId: String, exerciseName: String) {
         _activeExercises.update { currentExercises ->
             currentExercises + ExerciseInSession(

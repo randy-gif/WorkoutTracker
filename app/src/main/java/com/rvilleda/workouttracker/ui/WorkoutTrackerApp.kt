@@ -118,8 +118,12 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                     navController.navigate("add_exercise_to_workout")
                 },
                 onFinishWorkout = {
-                    sharedActiveWorkoutViewModel.finishAndClearWorkout()
                     navController.popBackStack("main_bottom_nav_flow", inclusive = false)
+                    sharedActiveWorkoutViewModel.finishAndClearWorkout()
+                },
+                onDiscardWorkout = {
+                    navController.popBackStack("main_bottom_nav_flow", inclusive = false)
+                    sharedActiveWorkoutViewModel.discardWorkout()
                 },
                 onBack = {
                     navController.popBackStack("main_bottom_nav_flow", inclusive = false)

@@ -38,6 +38,7 @@ import com.rvilleda.workouttracker.R
 fun ActiveWorkoutScreen(
     onNavigateToExerciseSelection: () -> Unit,
     onFinishWorkout: () -> Unit,
+    onDiscardWorkout: () -> Unit,
     onBack: () -> Unit,
     viewModel: ActiveWorkoutViewModel = viewModel()
 ) {
@@ -108,7 +109,8 @@ fun ActiveWorkoutScreen(
             item {
                 Row(Modifier.fillMaxWidth()) {
                     OutlinedButton(
-                        onClick = onNavigateToExerciseSelection,
+                        onClick = onDiscardWorkout,
+                        colors = ButtonDefaults.outlinedButtonColors(MaterialTheme.colorScheme.error),
                         modifier = Modifier
                             .weight(1f)
                             .padding(16.dp)
@@ -121,7 +123,7 @@ fun ActiveWorkoutScreen(
                             .weight(1f)
                             .padding(16.dp)
                     ) {
-                        Text("+ Add Another Exercise")
+                        Text("+ Add Exercise")
                     }
                 }
 
