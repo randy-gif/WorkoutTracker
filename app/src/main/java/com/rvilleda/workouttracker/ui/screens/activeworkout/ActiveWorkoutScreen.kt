@@ -113,7 +113,8 @@ fun ActiveWorkoutScreen(
                     RestTimerBanner(
                         timeRemaining = restTime,
                         onSkip = { viewModel.skipRestTimer() },
-                        onAdd30s = { viewModel.addRestTime(30) }
+                        onAdd30s = { viewModel.addRestTime(30) },
+                        onSubtract30s = { viewModel.subtractRestTime(30) }
                     )
                 }
         }
@@ -167,7 +168,8 @@ fun ActiveWorkoutScreen(
 fun RestTimerBanner(
     timeRemaining: Int,
     onSkip: () -> Unit,
-    onAdd30s: () -> Unit
+    onAdd30s: () -> Unit,
+    onSubtract30s: () -> Unit
 ) {
 
     val minutes = timeRemaining / 60
@@ -175,7 +177,6 @@ fun RestTimerBanner(
     val timeString = String.format("%d:%02d", minutes, seconds)
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -188,18 +189,21 @@ fun RestTimerBanner(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Left side: Icon and Clock
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(painterResource(R.drawable.ic_timer), contentDescription = "Rest Timer")
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = timeString,
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
 
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+
+                TextButton(onClick = onSubtract30s) {
+                    Text("-30s")
+                }
                 TextButton(onClick = onAdd30s) {
                     Text("+30s")
                 }

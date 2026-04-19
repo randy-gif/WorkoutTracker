@@ -234,6 +234,11 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _restTimeRemaining.value += seconds
     }
 
+    fun subtractRestTime(seconds: Int) {
+        val newTime = _restTimeRemaining.value - seconds
+        _restTimeRemaining.value = if (newTime > 0) newTime else 0
+    }
+
     fun saveWorkout() {
         viewModelScope.launch {
 
