@@ -90,15 +90,19 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _isWorkoutActive.value = true
         startTime = System.currentTimeMillis()
     }
-    fun finishAndClearWorkout() {
-        saveWorkout() // Save it to the database
-        _isWorkoutActive.value = false // Hide the bottom tab
-        _activeExercises.value = emptyList() // Wipe the memory
+    fun finishAndClearWorkout(onSuccess: () -> Unit) {
+        saveWorkout()
+        _isWorkoutActive.value = false
+        _activeExercises.value = emptyList()
+        restTimerJob?.cancel()
+        onSuccess()
+
     }
 
     fun discardWorkout() {
         _isWorkoutActive.value = false
         _activeExercises.value = emptyList()
+        restTimerJob?.cancel()
     }
 
     fun addExerciseToSession(baseExerciseId: String, exerciseName: String) {
