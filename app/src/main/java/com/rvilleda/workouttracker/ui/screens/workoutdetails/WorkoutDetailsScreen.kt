@@ -30,7 +30,7 @@ fun WorkoutDetailsScreen(
 ) {
 
 
-    val coroutineScope = rememberCoroutineScope()
+    var showDeleteDialog by remember { mutableStateOf(false) }
     var workout by remember { mutableStateOf<CompletedWorkoutEntity?>(null) }
     var exercises by remember { mutableStateOf<List<ExerciseInSession>>(emptyList()) }
 
@@ -42,6 +42,35 @@ fun WorkoutDetailsScreen(
             val type = object : TypeToken<List<ExerciseInSession>>() {}.type
             exercises = Gson().fromJson(fetchedWorkout.exercisesJson, type)
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = {
+                Text(text = "Delete Workout?")
+            },
+            text = {
+                Text(text = "Are you sure you want to delete this workout? This action cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDeleteWorkout()
+                    }
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -67,7 +96,7 @@ fun WorkoutDetailsScreen(
                 }
 
                 OutlinedButton(
-                    onClick = { onDeleteWorkout() },
+                    onClick = { showDeleteDialog = true },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier
                         .weight(1f)
