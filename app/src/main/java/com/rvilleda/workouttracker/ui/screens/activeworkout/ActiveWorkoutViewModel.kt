@@ -16,6 +16,7 @@ import com.rvilleda.workouttracker.data.database.WorkoutDao
 import com.rvilleda.workouttracker.data.database.CompletedWorkoutEntity
 import com.rvilleda.workouttracker.model.WeightUnit
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 
 
 class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
@@ -32,6 +33,10 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     private var startTime = System.currentTimeMillis()
     private val _elapsedTime = MutableStateFlow("00:00")
     val elapsedTime: StateFlow<String> = _elapsedTime.asStateFlow()
+
+    private var restTimerJob: Job? = null
+    private val _restTimeRemaining = MutableStateFlow(0)
+    val restTimeRemaining: StateFlow<Int> = _restTimeRemaining.asStateFlow()
 
     init {
         startTimer()
@@ -195,10 +200,28 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _activeExercises.value = updatedExercises
     }
 
-    // Placeholder for the timer we will build next!
     private fun startRestTimer() {
-        // TODO: Build the rest timer countdown logic
-        println("Rest Timer Started!")
+        // Cancel any existing timer so they don't overlap!
+        restTimerJob?.cancel()
+
+        // Set the default rest time (e.g., 90 seconds)
+        _restTimeRemaining.value = 90
+
+        restTimerJob = viewModelScope.launch {
+            while (_restTimeRemaining.value > 0) {
+                delay(1000L) // Wait exactly 1 second
+                _restTimeRemaining.value -= 1 // Tick down
+            }
+        }
+    }
+
+    fun skipRestTimer() {
+        restTimerJob?.cancel()
+        _restTimeRemaining.value = 0
+    }
+
+    fun addRestTime(seconds: Int) {
+        _restTimeRemaining.value += seconds
     }
 
     fun saveWorkout() {

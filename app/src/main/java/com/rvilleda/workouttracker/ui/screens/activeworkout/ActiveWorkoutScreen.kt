@@ -25,6 +25,13 @@ import com.rvilleda.workouttracker.model.ExerciseSet
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.res.painterResource
+import com.rvilleda.workouttracker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +44,8 @@ fun ActiveWorkoutScreen(
     val activeExercises by viewModel.activeExercises.collectAsState()
     val timerText by viewModel.elapsedTime.collectAsState()
     val preferredUnit by viewModel.preferredUnit.collectAsState()
+
+    val restTime by viewModel.restTimeRemaining.collectAsState()
 
     Scaffold(
         topBar = {
@@ -64,14 +73,17 @@ fun ActiveWorkoutScreen(
             )
         },
         bottomBar = {
-            OutlinedButton(
-                onClick = onNavigateToExerciseSelection,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text("+ Add Another Exercise")
-            }
+                AnimatedVisibility(
+                    visible = restTime > 0,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                ) {
+                    RestTimerBanner(
+                        timeRemaining = restTime,
+                        onSkip = { viewModel.skipRestTimer() },
+                        onAdd30s = { viewModel.addRestTime(30) }
+                    )
+                }
         }
     ) { padding ->
         LazyColumn(
@@ -93,6 +105,75 @@ fun ActiveWorkoutScreen(
                     onToggleComplete = { setId -> viewModel.toggleSetCompletion(exercise.id, setId) },
                 )
             }
+            item {
+                Row(Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = onNavigateToExerciseSelection,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(16.dp)
+                    ) {
+                        Text("Discard Workout")
+                    }
+                    OutlinedButton(
+                        onClick = onNavigateToExerciseSelection,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(16.dp)
+                    ) {
+                        Text("+ Add Another Exercise")
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+@Composable
+fun RestTimerBanner(
+    timeRemaining: Int,
+    onSkip: () -> Unit,
+    onAdd30s: () -> Unit
+) {
+
+    val minutes = timeRemaining / 60
+    val seconds = timeRemaining % 60
+    val timeString = String.format("%d:%02d", minutes, seconds)
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Left side: Icon and Clock
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(painterResource(R.drawable.ic_timer), contentDescription = "Rest Timer")
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = timeString,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            Row {
+                TextButton(onClick = onAdd30s) {
+                    Text("+30s")
+                }
+                TextButton(onClick = onSkip) {
+                    Text("Skip")
+                }
+            }
         }
     }
 }
@@ -112,13 +193,12 @@ fun ActiveExerciseCard(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        // 1. REMOVED horizontal padding from the main container!
         Column(modifier = Modifier.padding(vertical = 16.dp)) {
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp), // 2. Added it directly to the header
+                    .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -152,7 +232,7 @@ fun ActiveExerciseCard(
 
             TextButton(
                 onClick = onAddSet,
-                modifier = Modifier.padding(horizontal = 16.dp) // 3. Added it directly to the button
+                modifier = Modifier.padding(horizontal = 16.dp)
             ) {
                 Text("+ Add Set")
             }
