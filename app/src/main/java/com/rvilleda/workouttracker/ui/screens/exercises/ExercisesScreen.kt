@@ -38,7 +38,7 @@ fun ExercisesScreen(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            modifier = Modifier.fillMaxWidth().padding(end = 16.dp),
                             placeholder = { Text("Search exercises...") },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                             singleLine = true,
@@ -52,24 +52,33 @@ fun ExercisesScreen(
                     },
                     scrollBehavior = scrollBehavior
                 )
+                if(searchQuery.length == 0) {
+                    TabRowHeader(
+                        currentTab = selectedTab,
+                        onTabSelected = { newTab -> selectedTab = newTab }
+                    )
+                }
 
-                TabRowHeader(
-                    currentTab = selectedTab,
-                    onTabSelected = { newTab -> selectedTab = newTab }
-                )
+
             }
         }
     ) { padding ->
 
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            when (selectedTab) {
-                ExercisesTabs.CHEST -> ExercisesTabContent.Chest(searchQuery, onExerciseSelected)
-                ExercisesTabs.BACK -> ExercisesTabContent.Back(searchQuery, onExerciseSelected)
-                ExercisesTabs.LEGS -> ExercisesTabContent.Legs(searchQuery, onExerciseSelected)
-                ExercisesTabs.SHOULDERS -> ExercisesTabContent.Shoulders(searchQuery, onExerciseSelected)
-                ExercisesTabs.ARMS -> ExercisesTabContent.Arms(searchQuery, onExerciseSelected)
-                ExercisesTabs.CORE -> ExercisesTabContent.Core(searchQuery, onExerciseSelected)
+            if(searchQuery.length > 0) {
+                ExercisesTabContent.Search(searchQuery, onExerciseSelected)
             }
+            else {
+                when (selectedTab) {
+                    ExercisesTabs.CHEST -> ExercisesTabContent.Chest( onExerciseSelected)
+                    ExercisesTabs.BACK -> ExercisesTabContent.Back(onExerciseSelected)
+                    ExercisesTabs.LEGS -> ExercisesTabContent.Legs(onExerciseSelected)
+                    ExercisesTabs.SHOULDERS -> ExercisesTabContent.Shoulders(onExerciseSelected)
+                    ExercisesTabs.ARMS -> ExercisesTabContent.Arms(onExerciseSelected)
+                    ExercisesTabs.CORE -> ExercisesTabContent.Core(onExerciseSelected)
+                }
+            }
+
         }
     }
 }
