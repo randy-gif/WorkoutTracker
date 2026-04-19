@@ -48,6 +48,37 @@ fun ActiveWorkoutScreen(
 
     val restTime by viewModel.restTimeRemaining.collectAsState()
 
+    var showDiscardDialog by remember { mutableStateOf(false) }
+
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = {
+                Text(text = "Discard Workout?")
+            },
+            text = {
+                Text(text = "Are you sure you want to discard this workout? This action cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDiscardDialog = false
+                        onDiscardWorkout()
+                    }
+                ) {
+                    Text("Discard", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDiscardDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -109,7 +140,7 @@ fun ActiveWorkoutScreen(
             item {
                 Row(Modifier.fillMaxWidth()) {
                     OutlinedButton(
-                        onClick = onDiscardWorkout,
+                        onClick = { showDiscardDialog = true },
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                         modifier = Modifier
                             .weight(1f)
