@@ -110,7 +110,7 @@ fun ActiveWorkoutScreen(
                 Row(Modifier.fillMaxWidth()) {
                     OutlinedButton(
                         onClick = onDiscardWorkout,
-                        colors = ButtonDefaults.outlinedButtonColors(MaterialTheme.colorScheme.error),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                         modifier = Modifier
                             .weight(1f)
                             .padding(16.dp)

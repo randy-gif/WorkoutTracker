@@ -41,7 +41,6 @@ import com.google.gson.reflect.TypeToken
 fun ForYouTab(
     workouts: List<CompletedWorkoutEntity>,
     onPastWorkoutClick: (String) -> Unit,
-    onDeleteClick: (String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text(
@@ -87,14 +86,6 @@ fun ForYouTab(
                                 text = exerciseNames,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        IconButton(onClick = { onDeleteClick(workoutEntity.id) }) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_delete),
-                                contentDescription = "Delete Workout",
-                                tint = MaterialTheme.colorScheme.error
                             )
                         }
                     }

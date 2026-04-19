@@ -87,10 +87,7 @@ fun HomeScreen(
                 composable(TopTab.FOR_YOU.route) {
                     ForYouTab(
                         workouts,
-                        onPastWorkoutClick,
-                        onDeleteClick = { idToDelete ->
-                            viewModel.deleteWorkout(idToDelete)
-                        }
+                        onPastWorkoutClick
                     )
                 }
                 composable(TopTab.TOP_EXERCISES.route) {

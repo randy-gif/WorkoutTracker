@@ -7,18 +7,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import androidx.navigation.navigation
 import com.rvilleda.workouttracker.data.database.WorkoutDao
 import com.rvilleda.workouttracker.ui.navigation.AppDestinations
 import com.rvilleda.workouttracker.ui.screens.activeworkout.ActiveWorkoutScreen
@@ -29,6 +25,7 @@ import com.rvilleda.workouttracker.ui.screens.home.HomeScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 import com.rvilleda.workouttracker.R
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsScreen
+import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsViewModel
 
 @Composable
 fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
@@ -144,6 +141,14 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
         composable("workout_details_screen/{workoutId}") { backStackEntry ->
             val workoutId = backStackEntry.arguments?.getString("workoutId") ?: return@composable
 
+            val detailsViewModel: WorkoutDetailsViewModel = viewModel(
+                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        return WorkoutDetailsViewModel(workoutDao) as T
+                    }
+                }
+            )
+
             WorkoutDetailsScreen(
                 workoutId = workoutId,
                 workoutDao = workoutDao,
@@ -151,6 +156,12 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                 onWorkoutAgain = { pastExercises ->
                     sharedActiveWorkoutViewModel.startWorkoutAgain(pastExercises)
                     navController.navigate("active_workout_screen")
+                },
+                onDeleteWorkout = {
+                    detailsViewModel.deleteWorkout(
+                        workoutId = workoutId,
+                        onSuccess = { navController.popBackStack() }
+                    )
                 }
             )
         }

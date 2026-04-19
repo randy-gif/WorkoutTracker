@@ -14,6 +14,7 @@ import com.google.gson.reflect.TypeToken
 import com.rvilleda.workouttracker.data.database.CompletedWorkoutEntity
 import com.rvilleda.workouttracker.data.database.WorkoutDao
 import com.rvilleda.workouttracker.model.ExerciseInSession
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -24,8 +25,11 @@ fun WorkoutDetailsScreen(
     workoutId: String,
     workoutDao: WorkoutDao,
     onBack: () -> Unit,
-    onWorkoutAgain: (List<ExerciseInSession>) -> Unit
+    onWorkoutAgain: (List<ExerciseInSession>) -> Unit,
+    onDeleteWorkout: () -> Unit
 ) {
+
+
     val coroutineScope = rememberCoroutineScope()
     var workout by remember { mutableStateOf<CompletedWorkoutEntity?>(null) }
     var exercises by remember { mutableStateOf<List<ExerciseInSession>>(emptyList()) }
@@ -52,13 +56,25 @@ fun WorkoutDetailsScreen(
             )
         },
         bottomBar = {
-            Button(
-                onClick = { onWorkoutAgain(exercises) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text("Do This Workout Again")
+            Row(Modifier.fillMaxWidth()) {
+                OutlinedButton (
+                    onClick = { onWorkoutAgain(exercises) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(16.dp)
+                ) {
+                    Text("Workout Again")
+                }
+
+                OutlinedButton(
+                    onClick = { onDeleteWorkout() },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(16.dp)
+                ) {
+                    Text("Delete")
+                }
             }
         }
     ) { padding ->
