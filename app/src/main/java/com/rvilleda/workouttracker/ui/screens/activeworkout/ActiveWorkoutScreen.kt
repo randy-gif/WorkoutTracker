@@ -30,6 +30,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.ui.res.painterResource
 import com.rvilleda.workouttracker.R
 
@@ -136,6 +138,8 @@ fun ActiveWorkoutScreen(
                     },
                     onRemoveSet = { setId -> viewModel.removeSet(exercise.id, setId) },
                     onToggleComplete = { setId -> viewModel.toggleSetCompletion(exercise.id, setId) },
+                    onToggleAutoRest = { viewModel.toggleAutoRest(exercise.id) },
+                    onUpdateRestTime = { seconds -> viewModel.updateRestTime(exercise.id, seconds) }
                 )
             }
             item {
@@ -224,14 +228,92 @@ fun ActiveExerciseCard(
     onAddSet: () -> Unit,
     onUpdateSet: (String, String, String) -> Unit,
     onRemoveSet: (String) -> Unit,
-    onToggleComplete: (String) -> Unit
+    onToggleComplete: (String) -> Unit,
+    onToggleAutoRest: () -> Unit,
+    onUpdateRestTime: (Int) -> Unit,
 ) {
+
+    var menuExpanded by remember { mutableStateOf(false) }
+    var showRestDialog by remember { mutableStateOf(false) }
+
+    if (showRestDialog) {
+        // 1. Track the selected time as an Integer instead of a String
+        var selectedTime by remember { mutableStateOf(exercise.restTimeSeconds) }
+
+        // 2. Generate a list of times: from 5 seconds to 300 seconds (5 mins) in steps of 5
+        val timeOptions = (5..300 step 5).toList()
+
+        // 3. Pro Feature: Remember list state so we can auto-scroll to their current time
+        val listState = rememberLazyListState()
+
+        LaunchedEffect(Unit) {
+            // Find where their current time is in the list, and scroll there immediately
+            val initialIndex = timeOptions.indexOf(selectedTime).coerceAtLeast(0)
+            listState.scrollToItem(initialIndex)
+        }
+
+        AlertDialog(
+            onDismissRequest = { showRestDialog = false },
+            title = { Text("Set Rest Time") },
+            text = {
+                // Limit the height so the dialog doesn't take up the whole screen
+                Box(modifier = Modifier.heightIn(max = 350.dp)) {
+                    LazyColumn(state = listState) {
+                        items(timeOptions) { timeInSeconds ->
+
+                            // 4. Formatting Math: Convert "150" into "2 min 30 sec"
+                            val minutes = timeInSeconds / 60
+                            val seconds = timeInSeconds % 60
+                            val displayTime = String.format("%dmin %02dsec", minutes, seconds)
+
+                            // 5. The selectable row
+                            Text(
+                                text = displayTime,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (selectedTime == timeInSeconds)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
+                                    MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    // Highlight it if it's the currently selected option
+                                    .background(
+                                        if (selectedTime == timeInSeconds)
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        else
+                                            Color.Transparent
+                                    )
+                                    .clickable { selectedTime = timeInSeconds }
+                                    .padding(vertical = 12.dp, horizontal = 16.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onUpdateRestTime(selectedTime)
+                        showRestDialog = false
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(vertical = 16.dp)) {
-
+            // The Header Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -247,8 +329,49 @@ fun ActiveExerciseCard(
 
                 IconButton(onClick = onMoveUp) { Icon(Icons.Default.KeyboardArrowUp, "Move Up") }
                 IconButton(onClick = onMoveDown) { Icon(Icons.Default.KeyboardArrowDown, "Move Down") }
-                IconButton(onClick = onDeleteExercise) {
-                    Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error)
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Exercise Options")
+                    }
+
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false }
+                    ) {
+                        // Option 1: Toggle Auto Rest
+                        DropdownMenuItem(
+                            text = {
+                                Text(if (exercise.autoRestEnabled) "Disable Auto-Rest" else "Enable Auto-Rest")
+                            },
+                            onClick = {
+                                onToggleAutoRest()
+                                menuExpanded = false
+                            }
+                        )
+
+                        // Option 2: Adjust Time
+                        DropdownMenuItem(
+                            text = { Text("Adjust Rest Time (${exercise.restTimeSeconds}s)") },
+                            onClick = {
+                                menuExpanded = false
+                                showRestDialog = true
+                            }
+                        )
+
+                        // Option 3: Delete
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    "Delete Exercise",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            },
+                            onClick = {
+                                onDeleteExercise()
+                                menuExpanded = false
+                            }
+                        )
+                    }
                 }
             }
 

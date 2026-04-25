@@ -158,6 +158,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         }
     }
 
+
     fun toggleUnit() {
         _preferredUnit.value = if (_preferredUnit.value == WeightUnit.LBS) WeightUnit.KG else WeightUnit.LBS
     }
@@ -197,8 +198,8 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
                         val newCompletionStatus = !set.isCompleted
 
                         // IF IT WAS JUST COMPLETED, START THE REST TIMER!
-                        if (newCompletionStatus) {
-                            startRestTimer()
+                        if (newCompletionStatus && exercise.autoRestEnabled) {
+                            startRestTimer(exercise.restTimeSeconds)
                         }
 
                         set.copy(isCompleted = newCompletionStatus)
@@ -210,12 +211,28 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _activeExercises.value = updatedExercises
     }
 
-    private fun startRestTimer() {
+    fun toggleAutoRest(exerciseId: String) {
+        _activeExercises.value = _activeExercises.value.map { exercise ->
+            if (exercise.id == exerciseId) {
+                exercise.copy(autoRestEnabled = !exercise.autoRestEnabled)
+            } else exercise
+        }
+    }
+
+    fun updateRestTime(exerciseId: String, seconds: Int) {
+        _activeExercises.value = _activeExercises.value.map { exercise ->
+            if (exercise.id == exerciseId) {
+                exercise.copy(restTimeSeconds = seconds)
+            } else exercise
+        }
+    }
+
+    private fun startRestTimer(seconds: Int) {
         // Cancel any existing timer so they don't overlap!
         restTimerJob?.cancel()
 
         // Set the default rest time (e.g., 90 seconds)
-        _restTimeRemaining.value = 90
+        _restTimeRemaining.value = seconds
 
         restTimerJob = viewModelScope.launch {
             while (_restTimeRemaining.value > 0) {
