@@ -338,6 +338,9 @@ fun ActiveExerciseCard(
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false }
                     ) {
+                        val minutes = exercise.restTimeSeconds / 60
+                        val seconds = exercise.restTimeSeconds % 60
+                        val displayTime = String.format("%dmin %02dsec", minutes, seconds)
                         // Option 1: Toggle Auto Rest
                         DropdownMenuItem(
                             text = {
@@ -351,7 +354,7 @@ fun ActiveExerciseCard(
 
                         // Option 2: Adjust Time
                         DropdownMenuItem(
-                            text = { Text("Adjust Rest Time (${exercise.restTimeSeconds}s)") },
+                            text = { Text("Adjust Rest Time (${displayTime})") },
                             onClick = {
                                 menuExpanded = false
                                 showRestDialog = true
