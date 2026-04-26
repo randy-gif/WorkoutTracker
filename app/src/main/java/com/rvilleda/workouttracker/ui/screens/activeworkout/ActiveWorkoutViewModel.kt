@@ -73,6 +73,14 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         addExerciseToSession(firstExerciseId, firstExerciseName)
     }
 
+    fun startNewEmptyWorkout() {
+        if (_isWorkoutActive.value) return
+        _activeExercises.value = emptyList()
+        startTime = System.currentTimeMillis()
+        _isWorkoutActive.value = true
+    }
+
+
     fun startWorkoutAgain(pastExercises: List<ExerciseInSession>) {
         // Guard Clause: Don't overwrite if they are already working out!
         if (_isWorkoutActive.value) return

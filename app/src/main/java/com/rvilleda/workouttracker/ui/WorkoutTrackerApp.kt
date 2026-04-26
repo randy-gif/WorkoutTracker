@@ -4,6 +4,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +25,8 @@ import com.rvilleda.workouttracker.ui.screens.exercises.ExercisesScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 import com.rvilleda.workouttracker.R
+import com.rvilleda.workouttracker.model.Exercise
+import com.rvilleda.workouttracker.ui.screens.exercises.ExerciseViewModel
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsScreen
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsViewModel
 
@@ -90,17 +93,32 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                         )
                     }
 
-                    AppDestinations.EXERCISES -> ExercisesScreen(
-                        onExerciseSelected = { exerciseId, exerciseName ->
-                            if(isWorkoutActive){
-                                sharedActiveWorkoutViewModel.addExerciseToSession(exerciseId, exerciseName)
-                            }else {
-                                sharedActiveWorkoutViewModel.startNewWorkout(exerciseId, exerciseName)
-                            }
-                            navController.navigate("active_workout_screen")
-                        },
-                        onBack = { currentDestination = AppDestinations.HOME }
-                    )
+                    AppDestinations.EXERCISES -> {
+                        val exerciseViewModel : ExerciseViewModel =  viewModel()
+
+                        LaunchedEffect(Unit) {
+                            exerciseViewModel.clearSelection()
+                        }
+
+                        ExercisesScreen(
+                            onAddToWorkout = { exercises ->
+                                if (isWorkoutActive) {
+                                    exercises.forEach { exercise ->
+                                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name)
+                                    }
+                                    navController.navigate("active_workout_screen")
+                                } else {
+                                    sharedActiveWorkoutViewModel.startNewEmptyWorkout()
+                                    exercises.forEach { exercise ->
+                                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name)
+                                    }
+                                    navController.navigate("active_workout_screen")
+                                }
+                            },
+                            onBack = { currentDestination = AppDestinations.HOME },
+                            viewModel = exerciseViewModel
+                        )
+                    }
 
                     AppDestinations.EXERCISES_DATA -> ExercisesDataScreen()
                 }
@@ -128,12 +146,20 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
         }
 
         composable("add_exercise_to_workout") {
+
+            val exerciseViewModel : ExerciseViewModel =  viewModel()
+            LaunchedEffect(Unit) {
+                exerciseViewModel.clearSelection()
+            }
             ExercisesScreen(
-                onExerciseSelected = { newExerciseId, newExerciseName ->
-                    sharedActiveWorkoutViewModel.addExerciseToSession(newExerciseId, newExerciseName)
+                onAddToWorkout = { exercises ->
+                    exercises.forEach { exercise ->
+                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name)
+                    }
                     navController.popBackStack()
                 },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                viewModel = exerciseViewModel
             )
         }
 

@@ -12,6 +12,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.rvilleda.workouttracker.R
+import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.ui.screens.exercises.components.ExercisesTabs
 import com.rvilleda.workouttracker.ui.screens.exercises.components.TabRowHeader
 import com.rvilleda.workouttracker.ui.screens.exercises.tabs.ExercisesTabContent
@@ -19,14 +20,18 @@ import com.rvilleda.workouttracker.ui.screens.exercises.tabs.ExercisesTabContent
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExercisesScreen(
-    onExerciseSelected: (String, String) -> Unit,
-    onBack: () -> Unit
+    onAddToWorkout: (Set<Exercise>) -> Unit,
+    onBack: () -> Unit,
+    viewModel: ExerciseViewModel
 ) {
     val topBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topBarState)
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf(ExercisesTabs.CHEST) }
+
+    val selectedExercises by viewModel.selectedExercises.collectAsState()
+
 
     Scaffold(
         modifier = Modifier
@@ -58,27 +63,69 @@ fun ExercisesScreen(
                         onTabSelected = { newTab -> selectedTab = newTab }
                     )
                 }
-
-
+            }
+        },
+        bottomBar = {
+            if(selectedExercises.isNotEmpty()) {
+                Button(
+                    onClick = {
+                        onAddToWorkout(selectedExercises)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ){
+                    Text("Add to Workout")
+                }
             }
         }
     ) { padding ->
 
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if(searchQuery.length > 0) {
-                ExercisesTabContent.Search(searchQuery, onExerciseSelected)
-            }
-            else {
+            if(searchQuery.isNotEmpty()) {
+                ExercisesTabContent.Search(
+                    searchQuery = searchQuery,
+                    selectedExercises = selectedExercises,
+                    onToggleSelection = { viewModel.toggleSelection(it) }
+                )
+            } else {
                 when (selectedTab) {
-                    ExercisesTabs.CHEST -> ExercisesTabContent.Chest( onExerciseSelected)
-                    ExercisesTabs.BACK -> ExercisesTabContent.Back(onExerciseSelected)
-                    ExercisesTabs.LEGS -> ExercisesTabContent.Legs(onExerciseSelected)
-                    ExercisesTabs.SHOULDERS -> ExercisesTabContent.Shoulders(onExerciseSelected)
-                    ExercisesTabs.ARMS -> ExercisesTabContent.Arms(onExerciseSelected)
-                    ExercisesTabs.CORE -> ExercisesTabContent.Core(onExerciseSelected)
+                    // 3. Pass the state and the action into every tab
+                    ExercisesTabs.CHEST -> ExercisesTabContent.Chest(selectedExercises) {
+                        viewModel.toggleSelection(
+                            it
+                        )
+                    }
+
+                    ExercisesTabs.BACK -> ExercisesTabContent.Back(selectedExercises) {
+                        viewModel.toggleSelection(
+                            it
+                        )
+                    }
+
+                    ExercisesTabs.LEGS -> ExercisesTabContent.Legs(selectedExercises) {
+                        viewModel.toggleSelection(
+                            it
+                        )
+                    }
+
+                    ExercisesTabs.SHOULDERS -> ExercisesTabContent.Shoulders(selectedExercises) {
+                        viewModel.toggleSelection(
+                            it
+                        )
+                    }
+
+                    ExercisesTabs.ARMS -> ExercisesTabContent.Arms(selectedExercises) {
+                        viewModel.toggleSelection(
+                            it
+                        )
+                    }
+
+                    ExercisesTabs.CORE -> ExercisesTabContent.Core(selectedExercises) {
+                        viewModel.toggleSelection(
+                            it
+                        )
+                    }
                 }
             }
-
         }
     }
 }

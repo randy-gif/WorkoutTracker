@@ -16,18 +16,24 @@ import com.rvilleda.workouttracker.ui.components.ExerciseCard
 object ExercisesTabContent {
 
     @Composable
-    private fun ExerciseList(filteredExercises: List<Exercise>, onExerciseSelected: (String, String) -> Unit) {
+    private fun ExerciseList(
+        filteredExercises: List<Exercise>,
+        selectedExercises: Set<Exercise>, // Changed from Set<String>
+        onToggleSelection: (Exercise) -> Unit // Changed from (String)
+    ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-
             items(filteredExercises, key = { it.id }) { exercise ->
                 ExerciseCard(
                     exercise = exercise,
+                    // Checks if the whole object is in the Set!
+                    isSelected = selectedExercises.contains(exercise),
                     onClick = {
-                        onExerciseSelected(exercise.id, exercise.name)
+                        // Passes the whole object to the ViewModel!
+                        onToggleSelection(exercise)
                     }
                 )
             }
@@ -37,22 +43,20 @@ object ExercisesTabContent {
     @Composable
     private fun ExerciseListByGroup(
         muscleGroupName: MuscleGroup,
-        onExerciseSelected: (String, String) -> Unit
+        selectedIds: Set<Exercise>,
+        onToggleSelection: (Exercise) -> Unit
     ) {
         val filteredExercises = allExercises.filter { exercise ->
             exercise.muscleGroup == muscleGroupName
         }
-
-        ExerciseList(filteredExercises, onExerciseSelected)
-
+        ExerciseList(filteredExercises, selectedIds, onToggleSelection)
     }
-
-
 
     @Composable
     private fun ExercisesListBySearch(
         searchQuery: String,
-        onExerciseSelected: (String, String) -> Unit
+        selectedExercises: Set<Exercise>,
+        onToggleSelection: (Exercise) -> Unit
     ) {
         val filteredExercises = allExercises.filter { exercise ->
             exercise.name.contains(searchQuery, ignoreCase = true) ||
@@ -60,36 +64,35 @@ object ExercisesTabContent {
                     exercise.equipment.displayName.contains(searchQuery, ignoreCase = true) ||
                     exercise.movementType.displayName.contains(searchQuery, ignoreCase = true)
         }
-
-        ExerciseList(filteredExercises, onExerciseSelected)
+        ExerciseList(filteredExercises, selectedExercises, onToggleSelection)
     }
 
+    // Update all the public functions to accept the new state and action
+    @Composable
+    fun Chest(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.CHEST, selectedExercises, onToggleSelection)
 
     @Composable
-    fun Chest( onNavigate: (String, String) -> Unit) =
-        ExerciseListByGroup(MuscleGroup.CHEST, onNavigate)
+    fun Back(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.BACK, selectedExercises, onToggleSelection)
 
     @Composable
-    fun Back( onNavigate: (String, String) -> Unit) =
-        ExerciseListByGroup(MuscleGroup.BACK,  onNavigate)
+    fun Legs(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.LEGS, selectedExercises, onToggleSelection)
 
     @Composable
-    fun Legs( onNavigate: (String, String) -> Unit) =
-        ExerciseListByGroup(MuscleGroup.LEGS, onNavigate)
+    fun Shoulders(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.SHOULDERS, selectedExercises, onToggleSelection)
 
     @Composable
-    fun Shoulders( onNavigate: (String, String) -> Unit) =
-        ExerciseListByGroup(MuscleGroup.SHOULDERS, onNavigate)
+    fun Arms(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.ARMS, selectedExercises, onToggleSelection)
 
     @Composable
-    fun Arms( onNavigate: (String, String) -> Unit) =
-        ExerciseListByGroup(MuscleGroup.ARMS,  onNavigate)
+    fun Core(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit) =
+        ExerciseListByGroup(MuscleGroup.CORE, selectedExercises, onToggleSelection)
 
     @Composable
-    fun Core( onNavigate: (String, String) -> Unit) =
-        ExerciseListByGroup(MuscleGroup.CORE,  onNavigate)
-
-    @Composable
-    fun Search (searchQuery: String, onNavigate: (String, String) -> Unit) =
-        ExercisesListBySearch(searchQuery, onNavigate)
+    fun Search(searchQuery: String, selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit) =
+        ExercisesListBySearch(searchQuery, selectedExercises, onToggleSelection)
 }
