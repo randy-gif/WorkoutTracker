@@ -96,7 +96,7 @@ fun ActiveWorkoutScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.Default.KeyboardArrowDown, "Back")
                     }
                 }
             )

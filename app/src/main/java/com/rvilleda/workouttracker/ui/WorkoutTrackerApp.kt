@@ -1,5 +1,11 @@
 package com.rvilleda.workouttracker.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
@@ -10,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,6 +33,7 @@ import com.rvilleda.workouttracker.ui.screens.home.HomeScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 import com.rvilleda.workouttracker.R
 import com.rvilleda.workouttracker.model.Exercise
+import com.rvilleda.workouttracker.ui.components.ActiveWorkoutBanner
 import com.rvilleda.workouttracker.ui.screens.exercises.ExerciseViewModel
 import com.rvilleda.workouttracker.ui.screens.settings.SettingsScreen
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsScreen
@@ -58,6 +66,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
         composable("main_bottom_nav_flow") {
 
             var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
+            val timerText by sharedActiveWorkoutViewModel.elapsedTime.collectAsState()
 
             NavigationSuiteScaffold(
                 navigationSuiteItems = {
@@ -69,78 +78,87 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                             onClick = { currentDestination = it }
                         )
                     }
-                    if (isWorkoutActive) {
-                        item(
-                            icon = { Icon(painterResource(R.drawable.ic_timer), contentDescription = "Active") },
-                            label = { Text("Active") },
-                            selected = false,
-                            onClick = {
-                                navController.navigate("active_workout_screen")
-                            }
-                        )
-                    }
                 }
             ) {
-                when (currentDestination) {
-                    AppDestinations.HOME -> {
-                        val homeViewModel: HomeViewModel = viewModel(
-                            factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-                                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                    return HomeViewModel(workoutDao) as T
+                // 3. Wrap everything inside the scaffold in a Column
+                Column(modifier = Modifier.fillMaxSize()) {
+
+                    // 4. The Box takes up all available weight, pushing the banner to the bottom
+                    Box(modifier = Modifier.weight(1f)) {
+                        when (currentDestination) {
+                            AppDestinations.HOME -> {
+                                val homeViewModel: HomeViewModel = viewModel(
+                                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                            return HomeViewModel(workoutDao) as T
+                                        }
+                                    }
+                                )
+
+                                HomeScreen(
+                                    viewModel = homeViewModel,
+                                    onPastWorkoutClick = { workoutId ->
+                                        navController.navigate("workout_details_screen/$workoutId")
+                                    }
+                                )
+                            }
+
+                            AppDestinations.EXERCISES -> {
+                                val exerciseViewModel : ExerciseViewModel =  viewModel()
+
+                                LaunchedEffect(Unit) {
+                                    exerciseViewModel.clearSelection()
                                 }
+
+                                ExercisesScreen(
+                                    onAddToWorkout = { exercises ->
+                                        if (isWorkoutActive) {
+                                            exercises.forEach { exercise ->
+                                                sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
+                                            }
+                                            navController.navigate("active_workout_screen")
+                                        } else {
+                                            sharedActiveWorkoutViewModel.startNewEmptyWorkout()
+                                            exercises.forEach { exercise ->
+                                                sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
+                                            }
+                                            navController.navigate("active_workout_screen")
+                                        }
+                                    },
+                                    onBack = { currentDestination = AppDestinations.HOME },
+                                    viewModel = exerciseViewModel
+                                )
                             }
-                        )
 
-                        HomeScreen(
-                            viewModel = homeViewModel,
-                            onPastWorkoutClick = { workoutId ->
-                                navController.navigate("workout_details_screen/$workoutId")
+                            AppDestinations.EXERCISES_DATA -> ExercisesDataScreen()
+
+                            AppDestinations.SETTINGS -> {
+                                SettingsScreen(
+                                    currentUnit = globalUnit,
+                                    onUnitChanged = { newUnit -> settingsViewModel.setGlobalWeightUnit(newUnit) },
+                                    currentTheme = settingsViewModel.globalTheme.collectAsState().value,
+                                    onThemeChanged = { newTheme -> settingsViewModel.setGlobalTheme(newTheme) },
+                                    onBack = { currentDestination = AppDestinations.HOME }
+                                )
                             }
-                        )
-                    }
-
-                    AppDestinations.EXERCISES -> {
-                        val exerciseViewModel : ExerciseViewModel =  viewModel()
-
-                        LaunchedEffect(Unit) {
-                            exerciseViewModel.clearSelection()
                         }
-
-                        ExercisesScreen(
-                            onAddToWorkout = { exercises ->
-                                if (isWorkoutActive) {
-                                    exercises.forEach { exercise ->
-                                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
-                                    }
-                                    navController.navigate("active_workout_screen")
-                                } else {
-                                    sharedActiveWorkoutViewModel.startNewEmptyWorkout()
-                                    exercises.forEach { exercise ->
-                                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
-                                    }
-                                    navController.navigate("active_workout_screen")
-                                }
-                            },
-                            onBack = { currentDestination = AppDestinations.HOME },
-                            viewModel = exerciseViewModel
-                        )
                     }
 
-                    AppDestinations.EXERCISES_DATA -> ExercisesDataScreen()
-
-                    AppDestinations.SETTINGS -> {
-                        SettingsScreen(
-                            currentUnit = globalUnit,
-                            onUnitChanged = { newUnit -> settingsViewModel.setGlobalWeightUnit(newUnit) },
-                            currentTheme = settingsViewModel.globalTheme.collectAsState().value,
-                            onThemeChanged = { newTheme -> settingsViewModel.setGlobalTheme(newTheme) },
-                            onBack = { currentDestination = AppDestinations.HOME }
+                    // 5. THE BANNER!
+                    // This lives at the bottom of the Column. It animates in and out automatically based on the state.
+                    AnimatedVisibility(
+                        visible = isWorkoutActive,
+                        enter = slideInVertically(initialOffsetY = { it }), // Slides up from bottom
+                        exit = slideOutVertically(targetOffsetY = { it })   // Slides down to bottom
+                    ) {
+                        ActiveWorkoutBanner(
+                            timerText = timerText,
+                            onClick = { navController.navigate("active_workout_screen") }
                         )
                     }
                 }
             }
         }
-
         composable("active_workout_screen") {
 
             ActiveWorkoutScreen(
