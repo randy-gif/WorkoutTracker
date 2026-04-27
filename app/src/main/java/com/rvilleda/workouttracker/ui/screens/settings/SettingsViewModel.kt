@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.rvilleda.workouttracker.data.repository.SettingsRepository
+import com.rvilleda.workouttracker.model.AppTheme
 import com.rvilleda.workouttracker.model.WeightUnit
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,9 +24,23 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             initialValue = WeightUnit.LBS // Default starting value
         )
 
+    val globalTheme: StateFlow<AppTheme> = repository.themeFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = AppTheme.SYSTEM
+        )
+
+
     fun setGlobalWeightUnit(unit: WeightUnit) {
         viewModelScope.launch {
             repository.updateGlobalWeightUnit(unit)
+        }
+    }
+
+    fun setGlobalTheme(theme: AppTheme) {
+        viewModelScope.launch {
+            repository.updateGlobalTheme(theme)
         }
     }
 }

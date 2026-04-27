@@ -132,6 +132,8 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                         SettingsScreen(
                             currentUnit = globalUnit,
                             onUnitChanged = { newUnit -> settingsViewModel.setGlobalWeightUnit(newUnit) },
+                            currentTheme = settingsViewModel.globalTheme.collectAsState().value,
+                            onThemeChanged = { newTheme -> settingsViewModel.setGlobalTheme(newTheme) },
                             onBack = { currentDestination = AppDestinations.HOME }
                         )
                     }

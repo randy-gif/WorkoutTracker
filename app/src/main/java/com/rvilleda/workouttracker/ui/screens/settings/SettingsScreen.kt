@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.rvilleda.workouttracker.model.AppTheme
 import com.rvilleda.workouttracker.model.WeightUnit // Adjust this import based on your actual data model!
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -19,6 +20,8 @@ import com.rvilleda.workouttracker.model.WeightUnit // Adjust this import based 
 fun SettingsScreen(
     currentUnit: WeightUnit,
     onUnitChanged: (WeightUnit) -> Unit,
+    currentTheme: AppTheme,
+    onThemeChanged: (AppTheme) -> Unit,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -77,7 +80,7 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         // LBS Option
-                        UnitOptionChip(
+                        SettingsOptionChip(
                             text = "LBS",
                             isSelected = currentUnit == WeightUnit.LBS,
                             onClick = { onUnitChanged(WeightUnit.LBS) },
@@ -85,10 +88,49 @@ fun SettingsScreen(
                         )
 
                         // KG Option
-                        UnitOptionChip(
+                        SettingsOptionChip(
                             text = "KG",
                             isSelected = currentUnit == WeightUnit.KG,
                             onClick = { onUnitChanged(WeightUnit.KG) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "App Theme",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().selectableGroup(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Reusing your chip composable!
+                        SettingsOptionChip(
+                            text = AppTheme.SYSTEM.displayName,
+                            isSelected = currentTheme == AppTheme.SYSTEM,
+                            onClick = { onThemeChanged(AppTheme.SYSTEM) },
+                            modifier = Modifier.weight(1f)
+                        )
+                        SettingsOptionChip(
+                            text = AppTheme.LIGHT.displayName,
+                            isSelected = currentTheme == AppTheme.LIGHT,
+                            onClick = { onThemeChanged(AppTheme.LIGHT) },
+                            modifier = Modifier.weight(1f)
+                        )
+                        SettingsOptionChip(
+                            text = AppTheme.DARK.displayName,
+                            isSelected = currentTheme == AppTheme.DARK,
+                            onClick = { onThemeChanged(AppTheme.DARK) },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -100,7 +142,7 @@ fun SettingsScreen(
 
 // A custom reusable chip design for the selection options
 @Composable
-private fun UnitOptionChip(
+private fun SettingsOptionChip(
     text: String,
     isSelected: Boolean,
     onClick: () -> Unit,
