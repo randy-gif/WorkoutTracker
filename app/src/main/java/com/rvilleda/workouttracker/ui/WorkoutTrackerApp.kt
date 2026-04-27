@@ -27,8 +27,11 @@ import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 import com.rvilleda.workouttracker.R
 import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.ui.screens.exercises.ExerciseViewModel
+import com.rvilleda.workouttracker.ui.screens.settings.SettingsScreen
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsScreen
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsViewModel
+import com.rvilleda.workouttracker.ui.screens.settings.SettingsViewModel
+
 
 @Composable
 fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
@@ -43,6 +46,9 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
         }
     )
     val isWorkoutActive by sharedActiveWorkoutViewModel.isWorkoutActive.collectAsState()
+
+    val settingsViewModel: SettingsViewModel = viewModel()
+    val globalUnit by settingsViewModel.globalWeightUnit.collectAsState()
 
     NavHost(
         navController = navController,
@@ -104,13 +110,13 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                             onAddToWorkout = { exercises ->
                                 if (isWorkoutActive) {
                                     exercises.forEach { exercise ->
-                                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name)
+                                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
                                     }
                                     navController.navigate("active_workout_screen")
                                 } else {
                                     sharedActiveWorkoutViewModel.startNewEmptyWorkout()
                                     exercises.forEach { exercise ->
-                                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name)
+                                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
                                     }
                                     navController.navigate("active_workout_screen")
                                 }
@@ -121,6 +127,14 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                     }
 
                     AppDestinations.EXERCISES_DATA -> ExercisesDataScreen()
+
+                    AppDestinations.SETTINGS -> {
+                        SettingsScreen(
+                            currentUnit = globalUnit,
+                            onUnitChanged = { newUnit -> settingsViewModel.setGlobalWeightUnit(newUnit) },
+                            onBack = { currentDestination = AppDestinations.HOME }
+                        )
+                    }
                 }
             }
         }
@@ -128,6 +142,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
         composable("active_workout_screen") {
 
             ActiveWorkoutScreen(
+                globalUnit = globalUnit,
                 viewModel = sharedActiveWorkoutViewModel,
                 onNavigateToExerciseSelection = {
                     navController.navigate("add_exercise_to_workout")
@@ -154,7 +169,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
             ExercisesScreen(
                 onAddToWorkout = { exercises ->
                     exercises.forEach { exercise ->
-                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name)
+                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
                     }
                     navController.popBackStack()
                 },

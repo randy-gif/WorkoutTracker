@@ -22,9 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import com.rvilleda.workouttracker.model.ExerciseSet
-import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -34,10 +31,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.ui.res.painterResource
 import com.rvilleda.workouttracker.R
+import com.rvilleda.workouttracker.model.WeightUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActiveWorkoutScreen(
+    globalUnit: WeightUnit,
     onNavigateToExerciseSelection: () -> Unit,
     onFinishWorkout: () -> Unit,
     onDiscardWorkout: () -> Unit,
@@ -46,7 +45,6 @@ fun ActiveWorkoutScreen(
 ) {
     val activeExercises by viewModel.activeExercises.collectAsState()
     val timerText by viewModel.elapsedTime.collectAsState()
-    val preferredUnit by viewModel.preferredUnit.collectAsState()
 
     val restTime by viewModel.restTimeRemaining.collectAsState()
 
@@ -92,9 +90,6 @@ fun ActiveWorkoutScreen(
                     )
                 },
                 actions = {
-                    TextButton(onClick = { viewModel.toggleUnit() }) {
-                        Text(preferredUnit.displayName, style = MaterialTheme.typography.titleMedium)
-                    }
                     Button(onClick = onFinishWorkout) {
                         Text("Save")
                     }
@@ -132,14 +127,18 @@ fun ActiveWorkoutScreen(
                     onMoveUp = { viewModel.moveExerciseUp(exercise.id) },
                     onMoveDown = { viewModel.moveExerciseDown(exercise.id) },
                     onDeleteExercise = { viewModel.removeExerciseFromSession(exercise.id) },
-                    onAddSet = { viewModel.addSetToExercise(exercise.id) },
-                    onUpdateSet = { setId, weight, reps ->
-                        viewModel.updateSet(exercise.id, setId, weight, reps)
+                    onAddSet = { viewModel.addSetToExercise(exercise.id, globalUnit) },
+                    onUpdateSetWeight = { setId, weight ->
+                        viewModel.updateSetWeight(exercise.id, setId, weight)
                     },
+                    onUpdateSetReps = { setId, reps ->
+                        viewModel.updateSetReps(exercise.id, setId, reps)
+                    },
+                    onToggleExerciseUnit = {  viewModel.toggleExerciseUnit(exercise.id) },
                     onRemoveSet = { setId -> viewModel.removeSet(exercise.id, setId) },
                     onToggleComplete = { setId -> viewModel.toggleSetCompletion(exercise.id, setId) },
                     onToggleAutoRest = { viewModel.toggleAutoRest(exercise.id) },
-                    onUpdateRestTime = { seconds -> viewModel.updateRestTime(exercise.id, seconds) }
+                    onUpdateRestTime = { seconds -> viewModel.updateRestTime(exercise.id, seconds) },
                 )
             }
             item {
@@ -226,7 +225,9 @@ fun ActiveExerciseCard(
     onMoveDown: () -> Unit,
     onDeleteExercise: () -> Unit,
     onAddSet: () -> Unit,
-    onUpdateSet: (String, String, String) -> Unit,
+    onToggleExerciseUnit: () -> Unit,
+    onUpdateSetWeight: (String, String) -> Unit,
+    onUpdateSetReps: (String, String) -> Unit,
     onRemoveSet: (String) -> Unit,
     onToggleComplete: (String) -> Unit,
     onToggleAutoRest: () -> Unit,
@@ -361,6 +362,14 @@ fun ActiveExerciseCard(
                             }
                         )
 
+                        DropdownMenuItem(
+                            text = { Text(exercise.sets[0].weightUnit.displayName) },
+                            onClick = {
+                                onToggleExerciseUnit()
+                                menuExpanded = false
+                            }
+                        )
+
                         // Option 3: Delete
                         DropdownMenuItem(
                             text = {
@@ -384,8 +393,8 @@ fun ActiveExerciseCard(
                 SetInputRow(
                     setNumber = index + 1,
                     set = set,
-                    onWeightChange = { weight -> onUpdateSet(set.id, weight, set.reps) },
-                    onRepsChange = { reps -> onUpdateSet(set.id, set.weight, reps) },
+                    onWeightChange = { weight -> onUpdateSetWeight(set.id, weight) },
+                    onRepsChange = { reps -> onUpdateSetReps(set.id, reps) },
                     onDelete = { onRemoveSet(set.id) },
                     onToggleComplete = { onToggleComplete(set.id) }
                 )
