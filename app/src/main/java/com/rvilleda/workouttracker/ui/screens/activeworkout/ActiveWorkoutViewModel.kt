@@ -232,11 +232,11 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
                 } else {
                     exercise
                 }
+            }.filterNot { exercise ->
+                exercise.sets.isEmpty()
             }
         }
     }
-
-    // UPDATE EXERCISE
 
     fun toggleExerciseUnit(exerciseId: String) {
         _activeExercises.update { currentExercises ->

@@ -33,7 +33,7 @@ fun ActiveWorkoutBanner(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Reusing your timer icon
+
                 Icon(painterResource(R.drawable.ic_timer), contentDescription = "Active Workout")
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
@@ -49,7 +49,7 @@ fun ActiveWorkoutBanner(
                     )
                 }
             }
-            // An up arrow to indicate it slides up to expand
+
             Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Expand")
         }
     }
