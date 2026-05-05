@@ -35,6 +35,8 @@ import com.rvilleda.workouttracker.R
 import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.ui.components.ActiveWorkoutBanner
 import com.rvilleda.workouttracker.ui.screens.exercises.ExerciseViewModel
+import com.rvilleda.workouttracker.ui.screens.history.HistoryScreen
+import com.rvilleda.workouttracker.ui.screens.history.HistoryViewModel
 import com.rvilleda.workouttracker.ui.screens.settings.SettingsScreen
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsScreen
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsViewModel
@@ -130,7 +132,17 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                                 )
                             }
 
-                            AppDestinations.EXERCISES_DATA -> ExercisesDataScreen()
+                            AppDestinations.HISTORY -> {
+                                val historyViewModel: HistoryViewModel = viewModel(
+                                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                            return HistoryViewModel(workoutDao) as T
+                                        }
+                                    }
+                                )
+
+                                HistoryScreen(viewModel = historyViewModel)
+                            }
 
                             AppDestinations.SETTINGS -> {
                                 SettingsScreen(
