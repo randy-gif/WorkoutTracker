@@ -1,6 +1,12 @@
 package com.rvilleda.workouttracker.ui
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
@@ -62,7 +68,14 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
 
     NavHost(
         navController = navController,
-        startDestination = "main_bottom_nav_flow"
+        startDestination = "main_bottom_nav_flow",
+
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+
+
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None }
     ) {
 
         composable("main_bottom_nav_flow") {
@@ -156,13 +169,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                         }
                     }
 
-                    // 5. THE BANNER!
-                    // This lives at the bottom of the Column. It animates in and out automatically based on the state.
-                    AnimatedVisibility(
-                        visible = isWorkoutActive,
-                        enter = slideInVertically(initialOffsetY = { it }), // Slides up from bottom
-                        exit = slideOutVertically(targetOffsetY = { it })   // Slides down to bottom
-                    ) {
+                    if (isWorkoutActive) {
                         ActiveWorkoutBanner(
                             timerText = timerText,
                             onClick = { navController.navigate("active_workout_screen") }
@@ -171,7 +178,21 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                 }
             }
         }
-        composable("active_workout_screen") {
+        composable(
+            route = "active_workout_screen",
+            enterTransition = {
+                slideInVertically(
+                    initialOffsetY = { fullHeight -> (fullHeight * 0.8f).toInt() },
+                    animationSpec = tween(durationMillis = 300)
+                ) + fadeIn(animationSpec = tween(durationMillis = 300))
+            },
+            popExitTransition = {
+                slideOutVertically(
+                    targetOffsetY = { fullHeight -> (fullHeight * 0.8f).toInt() },
+                    animationSpec = tween(durationMillis = 300)
+                ) + fadeOut(animationSpec = tween(durationMillis = 300))
+            }
+        ) {
 
             ActiveWorkoutScreen(
                 globalUnit = globalUnit,
