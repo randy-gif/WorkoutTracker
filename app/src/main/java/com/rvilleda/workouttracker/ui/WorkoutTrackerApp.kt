@@ -244,6 +244,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
 
             WorkoutDetailsScreen(
                 workoutId = workoutId,
+                globalUnit = globalUnit,
                 workoutDao = workoutDao,
                 onBack = { navController.popBackStack() },
                 onWorkoutAgain = { pastExercises ->
