@@ -38,7 +38,7 @@ import com.rvilleda.workouttracker.model.WeightUnit
 fun ActiveWorkoutScreen(
     globalUnit: WeightUnit,
     onNavigateToExerciseSelection: () -> Unit,
-    onFinishWorkout: () -> Unit,
+    onFinishWorkout: (name: String) -> Unit,
     onDiscardWorkout: () -> Unit,
     onBack: () -> Unit,
     viewModel: ActiveWorkoutViewModel = viewModel()
@@ -49,6 +49,9 @@ fun ActiveWorkoutScreen(
     val restTime by viewModel.restTimeRemaining.collectAsState()
 
     var showDiscardDialog by remember { mutableStateOf(false) }
+    var showSaveDialog by remember { mutableStateOf(false) }
+
+    var workoutNameInput by remember { mutableStateOf("") }
 
     if (showDiscardDialog) {
         AlertDialog(
@@ -79,6 +82,49 @@ fun ActiveWorkoutScreen(
         )
     }
 
+    if (showSaveDialog) {
+        AlertDialog(
+            onDismissRequest = { showSaveDialog = false },
+            title = {
+                Text(text = "Finish and Save Workout?")
+            },
+            text = {
+                // 2. Wrap the text and textfield in a Column
+                Column {
+                    Text(text = "Are you sure you want to finish and save this workout?")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = workoutNameInput,
+                        onValueChange = { workoutNameInput = it },
+                        label = { Text("Workout Name") },
+                        placeholder = { Text("e.g. Leg Day, Push Day") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showSaveDialog = false
+                        // 3. Fallback to "Workout" if they left it completely blank
+                        val finalName = if (workoutNameInput.isNotBlank()) workoutNameInput.trim() else "Workout"
+                        onFinishWorkout(finalName)
+                    }
+                ) {
+                    Text("Save", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showSaveDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -90,7 +136,7 @@ fun ActiveWorkoutScreen(
                     )
                 },
                 actions = {
-                    Button(onClick = onFinishWorkout) {
+                    Button(onClick = {showSaveDialog = true}) {
                         Text("Save")
                     }
                 },

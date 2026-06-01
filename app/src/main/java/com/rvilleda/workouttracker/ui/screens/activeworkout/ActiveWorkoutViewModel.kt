@@ -94,8 +94,8 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _isWorkoutActive.value = true
         startTime = System.currentTimeMillis()
     }
-    fun finishAndClearWorkout(onSuccess: () -> Unit) {
-        saveWorkout()
+    fun finishAndClearWorkout(workoutName: String, onSuccess: () -> Unit) {
+        saveWorkout(workoutName)
         _isWorkoutActive.value = false
         _activeExercises.value = emptyList()
         restTimerJob?.cancel()
@@ -366,13 +366,14 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _restTimeRemaining.value = if (newTime > 0) newTime else 0
     }
 
-    fun saveWorkout() {
+    fun saveWorkout(workoutName: String) {
         viewModelScope.launch {
 
             val jsonString = Gson().toJson(_activeExercises.value)
 
             val newEntity = CompletedWorkoutEntity(
                 id = UUID.randomUUID().toString(),
+                name = workoutName,
                 dateCompleted = System.currentTimeMillis(),
                 durationMs = System.currentTimeMillis() - startTime,
                 exercisesJson = jsonString

@@ -154,7 +154,12 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                                     }
                                 )
 
-                                HistoryScreen(viewModel = historyViewModel)
+                                HistoryScreen(
+                                    onNavigateToWorkoutDetails = { workoutId ->
+                                        navController.navigate("workout_details_screen/$workoutId")
+                                    },
+                                    viewModel = historyViewModel
+                                )
                             }
 
                             AppDestinations.SETTINGS -> {
@@ -200,8 +205,11 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                 onNavigateToExerciseSelection = {
                     navController.navigate("add_exercise_to_workout")
                 },
-                onFinishWorkout = {
-                    sharedActiveWorkoutViewModel.finishAndClearWorkout({navController.popBackStack("main_bottom_nav_flow", inclusive = false)})
+                onFinishWorkout = { workoutName ->
+                    sharedActiveWorkoutViewModel.finishAndClearWorkout(
+                        workoutName = workoutName,
+                        onSuccess = { navController.popBackStack("main_bottom_nav_flow", inclusive = false) }
+                    )
                 },
                 onDiscardWorkout = {
                     navController.popBackStack("main_bottom_nav_flow", inclusive = false)

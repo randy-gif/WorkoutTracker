@@ -123,9 +123,6 @@ fun WorkoutDetailsScreen(
             return@Scaffold
         }
 
-        val dateFormatted = SimpleDateFormat("MMM dd, yyyy", LocalLocale.current.platformLocale)
-            .format(Date(workout!!.dateCompleted))
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -156,6 +153,12 @@ fun WorkoutDetailsScreen(
                         .padding(bottom = 16.dp, top = 16.dp)
                 ) {
                     // Display the Date right above the card
+                    Text(
+                        text = workout!!.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                     Text(
                         text = dateString,
                         style = MaterialTheme.typography.titleMedium,

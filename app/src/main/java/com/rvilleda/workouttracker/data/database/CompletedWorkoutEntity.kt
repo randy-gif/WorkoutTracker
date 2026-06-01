@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "completed_workouts")
 data class CompletedWorkoutEntity(
     @PrimaryKey val id: String,
+    val name: String,
     val dateCompleted: Long,
     val durationMs: Long,
     val exercisesJson: String
