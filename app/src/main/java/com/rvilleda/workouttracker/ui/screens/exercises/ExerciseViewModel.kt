@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.asStateFlow
 class ExerciseViewModel : ViewModel() {
 
     private val _selectedExercises = MutableStateFlow<Set<Exercise>>(emptySet())
+    private val _selectionMode = MutableStateFlow(false)
     val selectedExercises: StateFlow<Set<Exercise>> = _selectedExercises.asStateFlow()
+    val selectionMode: StateFlow<Boolean> = _selectionMode.asStateFlow()
 
     // 2. Accept the whole object as a parameter
     fun toggleSelection(exercise: Exercise) {
@@ -21,9 +23,20 @@ class ExerciseViewModel : ViewModel() {
         } else {
             _selectedExercises.value = currentSet + exercise
         }
+        if (_selectedExercises.value.isEmpty()) {
+            _selectionMode.value = false
+        }
     }
 
     fun clearSelection() {
         _selectedExercises.value = emptySet()
+        _selectionMode.value = false
+    }
+
+    fun toggleSelectionMode() {
+        _selectionMode.value = !_selectionMode.value
+        if (!_selectionMode.value) {
+            clearSelection()
+        }
     }
 }

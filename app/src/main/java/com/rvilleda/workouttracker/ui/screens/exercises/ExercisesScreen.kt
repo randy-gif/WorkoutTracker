@@ -31,6 +31,7 @@ fun ExercisesScreen(
     var selectedTab by remember { mutableStateOf(ExercisesTabs.CHEST) }
 
     val selectedExercises by viewModel.selectedExercises.collectAsState()
+    val selectionMode by viewModel.selectionMode.collectAsState()
 
 
     Scaffold(
@@ -66,14 +67,14 @@ fun ExercisesScreen(
             }
         },
         bottomBar = {
-            if(selectedExercises.isNotEmpty()) {
+            if(selectedExercises.isNotEmpty() && selectionMode) {
                 Button(
                     onClick = {
                         onAddToWorkout(selectedExercises)
                     },
                     modifier = Modifier.fillMaxWidth()
                 ){
-                    Text("Add to Workout")
+                    Text("Add ${selectedExercises.size} Exercises to Workout")
                 }
             }
         }
@@ -84,46 +85,56 @@ fun ExercisesScreen(
                 ExercisesTabContent.Search(
                     searchQuery = searchQuery,
                     selectedExercises = selectedExercises,
-                    onToggleSelection = { viewModel.toggleSelection(it) }
+                    onToggleSelection = { viewModel.toggleSelection(it) },
+                    selectionMode = selectionMode,
+                    onToggleSelectionMode = { viewModel.toggleSelectionMode() }
                 )
             } else {
                 when (selectedTab) {
                     // 3. Pass the state and the action into every tab
-                    ExercisesTabs.CHEST -> ExercisesTabContent.Chest(selectedExercises) {
-                        viewModel.toggleSelection(
-                            it
+                    ExercisesTabs.CHEST -> ExercisesTabContent.Chest(
+                        selectedExercises = selectedExercises,
+                        onToggleSelection = { viewModel.toggleSelection(it) },
+                        selectionMode = selectionMode,
+                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
                         )
-                    }
 
-                    ExercisesTabs.BACK -> ExercisesTabContent.Back(selectedExercises) {
-                        viewModel.toggleSelection(
-                            it
-                        )
-                    }
+                    ExercisesTabs.BACK -> ExercisesTabContent.Back(
+                        selectedExercises = selectedExercises,
+                        onToggleSelection = { viewModel.toggleSelection(it) },
+                        selectionMode = selectionMode,
+                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
+                    )
 
-                    ExercisesTabs.LEGS -> ExercisesTabContent.Legs(selectedExercises) {
-                        viewModel.toggleSelection(
-                            it
-                        )
-                    }
 
-                    ExercisesTabs.SHOULDERS -> ExercisesTabContent.Shoulders(selectedExercises) {
-                        viewModel.toggleSelection(
-                            it
-                        )
-                    }
+                    ExercisesTabs.LEGS -> ExercisesTabContent.Legs(
+                        selectedExercises = selectedExercises,
+                        onToggleSelection = { viewModel.toggleSelection(it) },
+                        selectionMode = selectionMode,
+                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
+                    )
 
-                    ExercisesTabs.ARMS -> ExercisesTabContent.Arms(selectedExercises) {
-                        viewModel.toggleSelection(
-                            it
-                        )
-                    }
 
-                    ExercisesTabs.CORE -> ExercisesTabContent.Core(selectedExercises) {
-                        viewModel.toggleSelection(
-                            it
-                        )
-                    }
+                    ExercisesTabs.SHOULDERS -> ExercisesTabContent.Shoulders(
+                        selectedExercises = selectedExercises,
+                        onToggleSelection = { viewModel.toggleSelection(it) },
+                        selectionMode = selectionMode,
+                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
+                    )
+
+                    ExercisesTabs.ARMS -> ExercisesTabContent.Arms(
+                        selectedExercises = selectedExercises,
+                        onToggleSelection = { viewModel.toggleSelection(it) },
+                        selectionMode = selectionMode,
+                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
+                    )
+
+                    ExercisesTabs.CORE -> ExercisesTabContent.Core(
+                        selectedExercises = selectedExercises,
+                        onToggleSelection = { viewModel.toggleSelection(it) },
+                        selectionMode = selectionMode,
+                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
+                    )
                 }
             }
         }

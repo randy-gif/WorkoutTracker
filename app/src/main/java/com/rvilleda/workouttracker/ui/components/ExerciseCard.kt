@@ -1,8 +1,11 @@
 package com.rvilleda.workouttracker.ui.components
 
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.KeyboardArrowRight
@@ -10,50 +13,60 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.rvilleda.workouttracker.model.Exercise
 
 
+@OptIn(ExperimentalFoundationApi::class) // Required for combinedClickable
 @Composable
 fun ExerciseCard(
     exercise: Exercise,
-    onClick: () -> Unit,
-    isSelected: Boolean = false, // 1. ADD THIS PARAMETER WITH A DEFAULT VALUE
+    isSelectionModeActive: Boolean, // 1. Tells the card if we are in "Selection Mode"
+    isSelected: Boolean,            // 2. Tells the card if THIS specific item is selected
+    onItemClick: () -> Unit,        // 3. Action for normal tap
+    onItemLongClick: () -> Unit,    // 4. Action for press-and-hold
     modifier: Modifier = Modifier
 ) {
-    // 2. Define the background and content colors based on the selection state
-    val backgroundColor = if (isSelected) {
+    // 5. Dynamic Colors: Only highlight if Selection Mode is ON and this item is SELECTED
+    val isHighlighted = isSelectionModeActive && isSelected
+
+    val backgroundColor = if (isHighlighted) {
         MaterialTheme.colorScheme.primaryContainer
     } else {
-        MaterialTheme.colorScheme.surfaceVariant // A clean, explicit base color
+        MaterialTheme.colorScheme.surfaceVariant
     }
 
-    val contentColor = if (isSelected) {
+    val contentColor = if (isHighlighted) {
         MaterialTheme.colorScheme.onPrimaryContainer
     } else {
         MaterialTheme.colorScheme.onSurface
     }
 
-    // 3. Define the icon and its tint based on the selection state
-    val icon = if (isSelected) {
-        Icons.Default.CheckCircle
-    } else {
-        Icons.Default.AddCircle
+    // 6. Dynamic Icon: Changes based on the current mode
+    val icon = when {
+        isHighlighted -> Icons.Default.CheckCircle // Selected state
+        isSelectionModeActive -> Icons.Default.AddCircle // Unselected state while selecting
+        else -> Icons.AutoMirrored.Filled.KeyboardArrowRight // Default viewing state
     }
 
-    val iconTint = if (isSelected) {
-        MaterialTheme.colorScheme.primary // Use the thematic primary color for the checkmark
+    val iconTint = if (isHighlighted) {
+        MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colorScheme.outline // The original subtle outline for the arrow
+        MaterialTheme.colorScheme.outline
     }
 
+    // We use a standard ElevatedCard (no onClick parameter) and apply the clicks to the modifier
     ElevatedCard(
-        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        // 4. Apply the dynamic container color
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(CardDefaults.elevatedShape) // Ensures the ripple effect stays inside the rounded corners
+            .combinedClickable(
+                onClick = onItemClick,
+                onLongClick = onItemLongClick
+            ),
         colors = CardDefaults.elevatedCardColors(containerColor = backgroundColor),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
@@ -70,12 +83,10 @@ fun ExerciseCard(
                     text = exercise.name,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    // 5. Apply the dynamic content color for contrast
                     color = contentColor
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                // Note: The muscle group chip is a self-contained element.
-                // We preserve its colors to maintain your original design.
+
                 Surface(
                     color = MaterialTheme.colorScheme.secondaryContainer,
                     shape = MaterialTheme.shapes.small
@@ -89,12 +100,68 @@ fun ExerciseCard(
                 }
             }
 
-            // Right Side: Dynamic Icon and Tint
+            // Right Side: Dynamic Icon
             Icon(
-                imageVector = icon, // 6. Use the dynamic icon
-                contentDescription = if (isSelected) "Selected" else "Details",
+                imageVector = icon,
+                contentDescription = when {
+                    isHighlighted -> "Selected"
+                    isSelectionModeActive -> "Select"
+                    else -> "View Details"
+                },
                 modifier = Modifier.padding(start = 8.dp),
-                tint = iconTint // 7. Use the dynamic tint
+                tint = iconTint
+            )
+        }
+    }
+}
+
+@Composable
+fun CreateExerciseCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        // Locks in the base surface color to match unselected exercises
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Left Side: Call to Action Text
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Create New Exercise",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                // Replacing the muscle group chip with a subtle helper text
+                Text(
+                    text = "Add a custom movement to your library",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Right Side: Add Icon
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Create Custom Exercise",
+                modifier = Modifier.padding(start = 8.dp),
+                // Using the primary color makes this stand out as an action button
+                tint = MaterialTheme.colorScheme.primary
             )
         }
     }
