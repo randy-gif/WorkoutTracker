@@ -29,7 +29,8 @@ object ExercisesTabContent {
         selectedExercises: Set<Exercise>,
         onToggleSelection: (Exercise) -> Unit,
         selectionMode: Boolean,
-        onToggleSelectionMode: () -> Unit
+        onToggleSelectionMode: () -> Unit,
+        onCreateCustomExercise: (() -> Unit)? = null
     ) {
 
 
@@ -53,7 +54,7 @@ object ExercisesTabContent {
                 item {
                     CreateExerciseCard(
                         onClick = {
-
+                            onCreateCustomExercise?.invoke()
                         }
                     )
                 }
@@ -106,7 +107,8 @@ object ExercisesTabContent {
         selectedExercises: Set<Exercise>,
         onToggleSelection: (Exercise) -> Unit,
         selectionMode: Boolean,
-        onToggleSelectionMode: () -> Unit
+        onToggleSelectionMode: () -> Unit,
+        onCreateCustomExercise: () -> Unit
     ) {
         val filteredExercises = allExercises.filter { exercise ->
             exercise.name.contains(searchQuery, ignoreCase = true) ||
@@ -114,7 +116,7 @@ object ExercisesTabContent {
                     exercise.equipment.displayName.contains(searchQuery, ignoreCase = true) ||
                     exercise.movementType.displayName.contains(searchQuery, ignoreCase = true)
         }
-        ExerciseList(filteredExercises, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
+        ExerciseList(filteredExercises, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode, onCreateCustomExercise)
     }
 
     // Update all the public functions to accept the new state and action
@@ -143,6 +145,20 @@ object ExercisesTabContent {
         ExerciseListByGroup(MuscleGroup.CORE, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
 
     @Composable
-    fun Search(searchQuery: String, selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
-        ExercisesListBySearch(searchQuery, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
+    fun Search(
+        searchQuery: String,
+        selectedExercises: Set<Exercise>,
+        onToggleSelection: (Exercise) -> Unit,
+        selectionMode: Boolean,
+        onToggleSelectionMode: () -> Unit,
+        onCreateCustomExercise: () -> Unit
+    ) =
+        ExercisesListBySearch(
+            searchQuery,
+            selectedExercises,
+            onToggleSelection,
+            selectionMode,
+            onToggleSelectionMode,
+            onCreateCustomExercise
+        )
 }

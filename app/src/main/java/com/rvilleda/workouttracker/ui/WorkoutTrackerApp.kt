@@ -1,5 +1,6 @@
 package com.rvilleda.workouttracker.ui
 
+import CreateCustomExerciseScreen
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -140,6 +141,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                                             navController.navigate("active_workout_screen")
                                         }
                                     },
+                                    onCreateCustomExercise = { navController.navigate("create_custom_exercise") },
                                     onBack = { currentDestination = AppDestinations.HOME },
                                     viewModel = exerciseViewModel
                                 )
@@ -212,12 +214,19 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                     )
                 },
                 onDiscardWorkout = {
-                    navController.popBackStack("main_bottom_nav_flow", inclusive = false)
-                    sharedActiveWorkoutViewModel.discardWorkout()
+                    sharedActiveWorkoutViewModel.discardWorkout(
+                        onSuccess = { navController.popBackStack("main_bottom_nav_flow", inclusive = false) }
+                    )
                 },
                 onBack = {
                     navController.popBackStack("main_bottom_nav_flow", inclusive = false)
                 }
+            )
+        }
+
+        composable(route = "create_custom_exercise") {
+            CreateCustomExerciseScreen(
+                onNavigateBack = { navController.popBackStack() },
             )
         }
 
@@ -234,6 +243,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                     }
                     navController.popBackStack()
                 },
+                onCreateCustomExercise = { navController.navigate("create_custom_exercise") },
                 onBack = { navController.popBackStack() },
                 viewModel = exerciseViewModel
             )

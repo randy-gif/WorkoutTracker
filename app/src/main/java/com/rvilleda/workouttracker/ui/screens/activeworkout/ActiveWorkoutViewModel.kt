@@ -95,15 +95,15 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         startTime = System.currentTimeMillis()
     }
     fun finishAndClearWorkout(workoutName: String, onSuccess: () -> Unit) {
+        onSuccess()
         saveWorkout(workoutName)
         _isWorkoutActive.value = false
         _activeExercises.value = emptyList()
         restTimerJob?.cancel()
-        onSuccess()
-
     }
 
-    fun discardWorkout() {
+    fun discardWorkout(onSuccess: () -> Unit) {
+        onSuccess()
         _isWorkoutActive.value = false
         _activeExercises.value = emptyList()
         restTimerJob?.cancel()

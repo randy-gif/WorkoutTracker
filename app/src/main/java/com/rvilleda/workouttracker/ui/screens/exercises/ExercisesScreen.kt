@@ -16,11 +16,13 @@ import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.ui.screens.exercises.components.ExercisesTabs
 import com.rvilleda.workouttracker.ui.screens.exercises.components.TabRowHeader
 import com.rvilleda.workouttracker.ui.screens.exercises.tabs.ExercisesTabContent
+import androidx.compose.ui.graphics.RectangleShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExercisesScreen(
     onAddToWorkout: (Set<Exercise>) -> Unit,
+    onCreateCustomExercise: () -> Unit,
     onBack: () -> Unit,
     viewModel: ExerciseViewModel
 ) {
@@ -67,13 +69,15 @@ fun ExercisesScreen(
             }
         },
         bottomBar = {
-            if(selectedExercises.isNotEmpty() && selectionMode) {
+            if (selectedExercises.isNotEmpty() && selectionMode) {
                 Button(
                     onClick = {
                         onAddToWorkout(selectedExercises)
                     },
-                    modifier = Modifier.fillMaxWidth()
-                ){
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RectangleShape, // Removes the rounded corners completely
+                    contentPadding = PaddingValues(vertical = 16.dp) // Makes the button a bit taller and easier to tap
+                ) {
                     Text("Add ${selectedExercises.size} Exercises to Workout")
                 }
             }
@@ -87,7 +91,8 @@ fun ExercisesScreen(
                     selectedExercises = selectedExercises,
                     onToggleSelection = { viewModel.toggleSelection(it) },
                     selectionMode = selectionMode,
-                    onToggleSelectionMode = { viewModel.toggleSelectionMode() }
+                    onToggleSelectionMode = { viewModel.toggleSelectionMode() },
+                    onCreateCustomExercise = onCreateCustomExercise
                 )
             } else {
                 when (selectedTab) {
