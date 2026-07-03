@@ -53,34 +53,34 @@ fun ActiveWorkoutScreen(
 
     var workoutNameInput by remember { mutableStateOf("") }
 
-//    if (showDiscardDialog) {
-//        AlertDialog(
-//            onDismissRequest = { showDiscardDialog = false },
-//            title = {
-//                Text(text = "Discard Workout?")
-//            },
-//            text = {
-//                Text(text = "Are you sure you want to discard this workout? This action cannot be undone.")
-//            },
-//            confirmButton = {
-//                TextButton(
-//                    onClick = {
-//                        onDiscardWorkout()
-//                        showDiscardDialog = false
-//                    }
-//                ) {
-//                    Text("Discard", color = MaterialTheme.colorScheme.error)
-//                }
-//            },
-//            dismissButton = {
-//                TextButton(
-//                    onClick = { showDiscardDialog = false }
-//                ) {
-//                    Text("Cancel")
-//                }
-//            }
-//        )
-//    }
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = {
+                Text(text = "Discard Workout?")
+            },
+            text = {
+                Text(text = "Are you sure you want to discard this workout? This action cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDiscardWorkout()
+                        showDiscardDialog = false
+                    }
+                ) {
+                    Text("Discard", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDiscardDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     if (showSaveDialog) {
         AlertDialog(
@@ -190,7 +190,7 @@ fun ActiveWorkoutScreen(
             item {
                 Row(Modifier.fillMaxWidth()) {
                     OutlinedButton(
-                        onClick = { onDiscardWorkout()},
+                        onClick = { showDiscardDialog = true },
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                         modifier = Modifier
                             .weight(1f)
