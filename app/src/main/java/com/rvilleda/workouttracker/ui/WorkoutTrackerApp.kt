@@ -233,7 +233,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao) {
             )
         }
 
-        composable(route = "create_custom_exercise") {
+        composable("create_custom_exercise") {
             class CreateCustomExerciseViewModelFactory(
                 private val exerciseDao: ExerciseDao
             ) : ViewModelProvider.Factory {
@@ -256,7 +256,13 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao) {
 
         composable("add_exercise_to_workout") {
 
-            val exerciseViewModel : ExerciseViewModel =  viewModel()
+            val exerciseViewModel : ExerciseViewModel =  viewModel(
+                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        return ExerciseViewModel(exerciseDao) as T
+                    }
+                }
+            )
             LaunchedEffect(Unit) {
                 exerciseViewModel.clearSelection()
             }
