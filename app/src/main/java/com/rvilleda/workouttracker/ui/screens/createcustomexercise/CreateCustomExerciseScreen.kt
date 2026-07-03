@@ -11,19 +11,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.rvilleda.workouttracker.model.Equipment
+import com.rvilleda.workouttracker.model.MuscleGroup
+import com.rvilleda.workouttracker.model.MovementType
+import com.rvilleda.workouttracker.ui.screens.exercises.CreateCustomExerciseViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateCustomExerciseScreen(
     onNavigateBack: () -> Unit,
+    viewModel: CreateCustomExerciseViewModel // Inject the ViewModel here
 ) {
-    var exerciseName by remember { mutableStateOf("") }
-    var selectedMuscle by remember { mutableStateOf("") }
-    var selectedEquipment by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
+    // 1. Observe the state from the ViewModel
+    // Using .collectAsState() automatically triggers a UI recomposition when the data changes
+    val exerciseName by viewModel.exerciseName.collectAsState()
+    val selectedMuscle by viewModel.selectedMuscle.collectAsState()
+    val selectedEquipment by viewModel.selectedEquipment.collectAsState()
+    val notes by viewModel.notes.collectAsState()
+    val isSaveEnabled by viewModel.isSaveEnabled.collectAsState()
 
-    val muscleGroups = listOf("Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Full Body")
-    val equipmentList = listOf("Barbell", "Dumbbell", "Machine", "Cables", "Bodyweight", "Bands", "Other")
+    val muscleGroups = MuscleGroup.values()
+    val equipmentList = Equipment.values()
 
     Scaffold(
         topBar = {
@@ -43,9 +51,10 @@ fun CreateCustomExerciseScreen(
                     .padding(16.dp)
             ) {
                 Button(
-                    onClick = {  },
+                    // 2. Call the ViewModel to save, passing the back navigation as the success callback
+                    onClick = { viewModel.saveExercise(onSuccess = onNavigateBack) },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = exerciseName.isNotBlank() && selectedMuscle.isNotBlank() && selectedEquipment.isNotBlank()
+                    enabled = isSaveEnabled // 3. Bound directly to the ViewModel's calculation
                 ) {
                     Text("Save Exercise", modifier = Modifier.padding(vertical = 8.dp))
                 }
@@ -62,7 +71,8 @@ fun CreateCustomExerciseScreen(
         ) {
             OutlinedTextField(
                 value = exerciseName,
-                onValueChange = { exerciseName = it },
+                // 4. Send user input back to the ViewModel
+                onValueChange = { viewModel.updateName(it) },
                 label = { Text("Exercise Name") },
                 placeholder = { Text("e.g., Deficit Deadlift") },
                 modifier = Modifier.fillMaxWidth(),
@@ -83,10 +93,13 @@ fun CreateCustomExerciseScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     muscleGroups.forEach { muscle ->
-                        CustomCategoryChip(
-                            label = muscle,
-                            isHighlighted = selectedMuscle == muscle,
-                            onClick = { selectedMuscle = muscle }
+                        FilterChip(
+                            selected = selectedMuscle == muscle,
+                            onClick = { viewModel.updateMuscle(muscle) },
+                            label = { Text(muscle.displayName) },
+                            leadingIcon = if (selectedMuscle == muscle) {
+                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            } else null
                         )
                     }
                 }
@@ -106,10 +119,13 @@ fun CreateCustomExerciseScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     equipmentList.forEach { equip ->
-                        CustomCategoryChip(
-                            label = equip,
-                            isHighlighted = selectedEquipment == equip,
-                            onClick = { selectedEquipment = equip }
+                        FilterChip(
+                            selected = selectedEquipment == equip,
+                            onClick = { viewModel.updateEquipment(equip) },
+                            label = { Text(equip.displayName) },
+                            leadingIcon = if (selectedEquipment == equip) {
+                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            } else null
                         )
                     }
                 }
@@ -117,61 +133,13 @@ fun CreateCustomExerciseScreen(
 
             OutlinedTextField(
                 value = notes,
-                onValueChange = { notes = it },
+                onValueChange = { viewModel.updateNotes(it) }, // Send input to ViewModel
                 label = { Text("Personal Notes & Cues (Optional)") },
                 placeholder = { Text("e.g., Focus on a slow eccentric motion.") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp),
                 maxLines = 4
-            )
-        }
-    }
-}
-
-// Extracted Component implementing your exact color logic
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CustomCategoryChip(
-    label: String,
-    isHighlighted: Boolean,
-    onClick: () -> Unit
-) {
-    val backgroundColor = if (isHighlighted) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
-
-    val contentColor = if (isHighlighted) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
-
-    Surface(
-        onClick = onClick,
-        color = backgroundColor,
-        contentColor = contentColor,
-        shape = MaterialTheme.shapes.medium, // Gives it a nice rounded chip look
-        modifier = Modifier.height(32.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-        ) {
-            if (isHighlighted) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(16.dp)
-                        .padding(end = 4.dp)
-                )
-            }
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge
             )
         }
     }

@@ -17,6 +17,7 @@ import com.rvilleda.workouttracker.ui.screens.exercises.components.ExercisesTabs
 import com.rvilleda.workouttracker.ui.screens.exercises.components.TabRowHeader
 import com.rvilleda.workouttracker.ui.screens.exercises.tabs.ExercisesTabContent
 import androidx.compose.ui.graphics.RectangleShape
+import com.rvilleda.workouttracker.model.MuscleGroup
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +36,13 @@ fun ExercisesScreen(
     val selectedExercises by viewModel.selectedExercises.collectAsState()
     val selectionMode by viewModel.selectionMode.collectAsState()
 
+    val allDbExercises by viewModel.exercises.collectAsState()
+    val chestExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.CHEST }
+    val backExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.BACK }
+    val legsExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.LEGS }
+    val shouldersExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.SHOULDERS }
+    val armsExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.ARMS }
+    val coreExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.CORE }
 
     Scaffold(
         modifier = Modifier
@@ -87,6 +95,7 @@ fun ExercisesScreen(
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if(searchQuery.isNotEmpty()) {
                 ExercisesTabContent.Search(
+                    allExercises = allDbExercises,
                     searchQuery = searchQuery,
                     selectedExercises = selectedExercises,
                     onToggleSelection = { viewModel.toggleSelection(it) },
@@ -96,8 +105,8 @@ fun ExercisesScreen(
                 )
             } else {
                 when (selectedTab) {
-                    // 3. Pass the state and the action into every tab
                     ExercisesTabs.CHEST -> ExercisesTabContent.Chest(
+                        chestExercises = chestExercises,
                         selectedExercises = selectedExercises,
                         onToggleSelection = { viewModel.toggleSelection(it) },
                         selectionMode = selectionMode,
@@ -105,6 +114,7 @@ fun ExercisesScreen(
                         )
 
                     ExercisesTabs.BACK -> ExercisesTabContent.Back(
+                        backExercises = backExercises,
                         selectedExercises = selectedExercises,
                         onToggleSelection = { viewModel.toggleSelection(it) },
                         selectionMode = selectionMode,
@@ -113,6 +123,7 @@ fun ExercisesScreen(
 
 
                     ExercisesTabs.LEGS -> ExercisesTabContent.Legs(
+                        legsExercises = legsExercises,
                         selectedExercises = selectedExercises,
                         onToggleSelection = { viewModel.toggleSelection(it) },
                         selectionMode = selectionMode,
@@ -121,6 +132,7 @@ fun ExercisesScreen(
 
 
                     ExercisesTabs.SHOULDERS -> ExercisesTabContent.Shoulders(
+                        shouldersExercises = shouldersExercises,
                         selectedExercises = selectedExercises,
                         onToggleSelection = { viewModel.toggleSelection(it) },
                         selectionMode = selectionMode,
@@ -128,6 +140,7 @@ fun ExercisesScreen(
                     )
 
                     ExercisesTabs.ARMS -> ExercisesTabContent.Arms(
+                        armsExercises = armsExercises,
                         selectedExercises = selectedExercises,
                         onToggleSelection = { viewModel.toggleSelection(it) },
                         selectionMode = selectionMode,
@@ -135,6 +148,7 @@ fun ExercisesScreen(
                     )
 
                     ExercisesTabs.CORE -> ExercisesTabContent.Core(
+                        coreExercises = coreExercises,
                         selectedExercises = selectedExercises,
                         onToggleSelection = { viewModel.toggleSelection(it) },
                         selectionMode = selectionMode,

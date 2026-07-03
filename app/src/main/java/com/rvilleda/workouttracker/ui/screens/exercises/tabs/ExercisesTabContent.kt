@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.model.MuscleGroup
-import com.rvilleda.workouttracker.model.allExercises
 import com.rvilleda.workouttracker.ui.components.ExerciseCard
 import com.rvilleda.workouttracker.ui.components.CreateExerciseCard
 
@@ -86,23 +85,9 @@ object ExercisesTabContent {
     }
 
 
-
-    @Composable
-    private fun ExerciseListByGroup(
-        muscleGroupName: MuscleGroup,
-        selectedIds: Set<Exercise>,
-        onToggleSelection: (Exercise) -> Unit,
-        selectionMode: Boolean,
-        onToggleSelectionMode: () -> Unit
-    ) {
-        val filteredExercises = allExercises.filter { exercise ->
-            exercise.muscleGroup == muscleGroupName
-        }
-        ExerciseList(filteredExercises, selectedIds, onToggleSelection, selectionMode, onToggleSelectionMode)
-    }
-
     @Composable
     private fun ExercisesListBySearch(
+        allExercises: List<Exercise>,
         searchQuery: String,
         selectedExercises: Set<Exercise>,
         onToggleSelection: (Exercise) -> Unit,
@@ -121,31 +106,32 @@ object ExercisesTabContent {
 
     // Update all the public functions to accept the new state and action
     @Composable
-    fun Chest(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
-        ExerciseListByGroup(MuscleGroup.CHEST, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
+    fun Chest(chestExercises: List<Exercise>, selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
+        ExerciseList(chestExercises, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
 
     @Composable
-    fun Back(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
-        ExerciseListByGroup(MuscleGroup.BACK, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
+    fun Back(backExercises: List<Exercise>, selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
+        ExerciseList(backExercises, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
 
     @Composable
-    fun Legs(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
-        ExerciseListByGroup(MuscleGroup.LEGS, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
+    fun Legs(legsExercises: List<Exercise>, selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
+        ExerciseList(legsExercises, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
 
     @Composable
-    fun Shoulders(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
-        ExerciseListByGroup(MuscleGroup.SHOULDERS, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
+    fun Shoulders(shouldersExercises: List<Exercise>, selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
+        ExerciseList(shouldersExercises, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
 
     @Composable
-    fun Arms(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
-        ExerciseListByGroup(MuscleGroup.ARMS, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
+    fun Arms(armsExercises: List<Exercise>, selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
+        ExerciseList(armsExercises, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
 
     @Composable
-    fun Core(selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
-        ExerciseListByGroup(MuscleGroup.CORE, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
+    fun Core(coreExercises: List<Exercise>, selectedExercises: Set<Exercise>, onToggleSelection: (Exercise) -> Unit, selectionMode: Boolean, onToggleSelectionMode: () -> Unit) =
+        ExerciseList(coreExercises, selectedExercises, onToggleSelection, selectionMode, onToggleSelectionMode)
 
     @Composable
     fun Search(
+        allExercises: List<Exercise>,
         searchQuery: String,
         selectedExercises: Set<Exercise>,
         onToggleSelection: (Exercise) -> Unit,
@@ -154,6 +140,7 @@ object ExercisesTabContent {
         onCreateCustomExercise: () -> Unit
     ) =
         ExercisesListBySearch(
+            allExercises,
             searchQuery,
             selectedExercises,
             onToggleSelection,

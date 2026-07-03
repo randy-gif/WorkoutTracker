@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -39,8 +40,10 @@ import com.rvilleda.workouttracker.ui.screens.exercises.ExercisesScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 import com.rvilleda.workouttracker.R
+import com.rvilleda.workouttracker.data.database.ExerciseDao
 import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.ui.components.ActiveWorkoutBanner
+import com.rvilleda.workouttracker.ui.screens.exercises.CreateCustomExerciseViewModel
 import com.rvilleda.workouttracker.ui.screens.exercises.ExerciseViewModel
 import com.rvilleda.workouttracker.ui.screens.history.HistoryScreen
 import com.rvilleda.workouttracker.ui.screens.history.HistoryViewModel
@@ -51,7 +54,7 @@ import com.rvilleda.workouttracker.ui.screens.settings.SettingsViewModel
 
 
 @Composable
-fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
+fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao) {
 
     val navController = rememberNavController()
 
@@ -120,7 +123,13 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
                             }
 
                             AppDestinations.EXERCISES -> {
-                                val exerciseViewModel : ExerciseViewModel =  viewModel()
+                                val exerciseViewModel : ExerciseViewModel =  viewModel(
+                                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                            return ExerciseViewModel(exerciseDao) as T
+                                        }
+                                    }
+                                )
 
                                 LaunchedEffect(Unit) {
                                     exerciseViewModel.clearSelection()
@@ -225,8 +234,23 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao) {
         }
 
         composable(route = "create_custom_exercise") {
+            class CreateCustomExerciseViewModelFactory(
+                private val exerciseDao: ExerciseDao
+            ) : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    if (modelClass.isAssignableFrom(CreateCustomExerciseViewModel::class.java)) {
+                        @Suppress("UNCHECKED_CAST")
+                        return CreateCustomExerciseViewModel(exerciseDao) as T
+                    }
+                    throw IllegalArgumentException("Unknown ViewModel class")
+                }
+            }
+            val viewModel: CreateCustomExerciseViewModel = viewModel(
+                factory = CreateCustomExerciseViewModelFactory(exerciseDao)
+            )
             CreateCustomExerciseScreen(
                 onNavigateBack = { navController.popBackStack() },
+                viewModel = viewModel
             )
         }
 
