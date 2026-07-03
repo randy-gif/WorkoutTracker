@@ -278,24 +278,22 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _activeExercises.value = _activeExercises.value.filterNot { it.id == exerciseId }
     }
 
-    // 3. REARRANGE EXERCISES (Move Up / Down)
-    fun moveExerciseUp(exerciseId: String) {
-        val currentList = _activeExercises.value.toMutableList()
-        val index = currentList.indexOfFirst { it.id == exerciseId }
-        if (index > 0) {
-            val item = currentList.removeAt(index)
-            currentList.add(index - 1, item)
-            _activeExercises.value = currentList
-        }
-    }
 
-    fun moveExerciseDown(exerciseId: String) {
-        val currentList = _activeExercises.value.toMutableList()
-        val index = currentList.indexOfFirst { it.id == exerciseId }
-        if (index >= 0 && index < currentList.size - 1) {
-            val item = currentList.removeAt(index)
-            currentList.add(index + 1, item)
-            _activeExercises.value = currentList
+// 3. REARRANGE EXERCISES (Drag and Drop)
+    fun moveExerciseByKey(fromId: String, toId: String) {
+        _activeExercises.update { currentList ->
+            val mutableList = currentList.toMutableList()
+
+            // Find the exact positions of the dragged item and its target
+            val fromIndex = mutableList.indexOfFirst { it.id == fromId }
+            val toIndex = mutableList.indexOfFirst { it.id == toId }
+
+            if (fromIndex != -1 && toIndex != -1) {
+                // Swap them
+                val item = mutableList.removeAt(fromIndex)
+                mutableList.add(toIndex, item)
+            }
+            mutableList
         }
     }
 

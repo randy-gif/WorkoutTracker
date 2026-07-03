@@ -32,6 +32,10 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.ui.res.painterResource
 import com.rvilleda.workouttracker.R
 import com.rvilleda.workouttracker.model.WeightUnit
+import androidx.compose.foundation.lazy.rememberLazyListState
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
+import androidx.compose.material.icons.filled.Menu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,8 +54,14 @@ fun ActiveWorkoutScreen(
 
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showSaveDialog by remember { mutableStateOf(false) }
-
     var workoutNameInput by remember { mutableStateOf("") }
+
+    val lazyListState = rememberLazyListState()
+    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
+        val toKey = to.key as? String ?: return@rememberReorderableLazyListState
+        viewModel.moveExerciseByKey(fromKey, toKey)
+    }
 
     if (showDiscardDialog) {
         AlertDialog(
@@ -163,29 +173,29 @@ fun ActiveWorkoutScreen(
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.padding(padding),
+            state = lazyListState,
+            modifier = Modifier
+                .padding(padding),
             verticalArrangement = Arrangement.spacedBy(24.dp),
             contentPadding = PaddingValues(bottom = 80.dp)
         ) {
             items(activeExercises, key = { it.id }) { exercise ->
-                ActiveExerciseCard(
-                    exercise = exercise,
-                    onMoveUp = { viewModel.moveExerciseUp(exercise.id) },
-                    onMoveDown = { viewModel.moveExerciseDown(exercise.id) },
-                    onDeleteExercise = { viewModel.removeExerciseFromSession(exercise.id) },
-                    onAddSet = { viewModel.addSetToExercise(exercise.id, globalUnit) },
-                    onUpdateSetWeight = { setId, weight ->
-                        viewModel.updateSetWeight(exercise.id, setId, weight)
-                    },
-                    onUpdateSetReps = { setId, reps ->
-                        viewModel.updateSetReps(exercise.id, setId, reps)
-                    },
-                    onToggleExerciseUnit = {  viewModel.toggleExerciseUnit(exercise.id) },
-                    onRemoveSet = { setId -> viewModel.removeSet(exercise.id, setId) },
-                    onToggleComplete = { setId -> viewModel.toggleSetCompletion(exercise.id, setId) },
-                    onToggleAutoRest = { viewModel.toggleAutoRest(exercise.id) },
-                    onUpdateRestTime = { seconds -> viewModel.updateRestTime(exercise.id, seconds) },
-                )
+                ReorderableItem(reorderState, key = exercise.id) { isDragging ->
+                    ActiveExerciseCard(
+                        exercise = exercise,
+                        isDragging = isDragging,
+                        dragModifier = Modifier.draggableHandle(),
+                        onDeleteExercise = { viewModel.removeExerciseFromSession(exercise.id) },
+                        onAddSet = { viewModel.addSetToExercise(exercise.id, globalUnit) },
+                        onUpdateSetWeight = { setId, weight -> viewModel.updateSetWeight(exercise.id, setId, weight) },
+                        onUpdateSetReps = { setId, reps -> viewModel.updateSetReps(exercise.id, setId, reps) },
+                        onToggleExerciseUnit = {  viewModel.toggleExerciseUnit(exercise.id) },
+                        onRemoveSet = { setId -> viewModel.removeSet(exercise.id, setId) },
+                        onToggleComplete = { setId -> viewModel.toggleSetCompletion(exercise.id, setId) },
+                        onToggleAutoRest = { viewModel.toggleAutoRest(exercise.id) },
+                        onUpdateRestTime = { seconds -> viewModel.updateRestTime(exercise.id, seconds) },
+                    )
+                }
             }
             item {
                 Row(Modifier.fillMaxWidth()) {
@@ -267,8 +277,8 @@ fun RestTimerBanner(
 @Composable
 fun ActiveExerciseCard(
     exercise: ExerciseInSession,
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
+    isDragging: Boolean,
+    dragModifier: Modifier = Modifier,
     onDeleteExercise: () -> Unit,
     onAddSet: () -> Unit,
     onToggleExerciseUnit: () -> Unit,
@@ -357,7 +367,7 @@ fun ActiveExerciseCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 8.dp else 2.dp)
     ) {
         Column(modifier = Modifier.padding(vertical = 16.dp)) {
             // The Header Row
@@ -374,8 +384,12 @@ fun ActiveExerciseCard(
                     modifier = Modifier.weight(1f)
                 )
 
-                IconButton(onClick = onMoveUp) { Icon(Icons.Default.KeyboardArrowUp, "Move Up") }
-                IconButton(onClick = onMoveDown) { Icon(Icons.Default.KeyboardArrowDown, "Move Down") }
+                IconButton(
+                    onClick = { /* Drag handled by modifier */ },
+                    modifier = dragModifier // Attach the drag listener right here
+                ) {
+                    Icon(Icons.Default.Menu, contentDescription = "Drag to reorder")
+                }
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "Exercise Options")
