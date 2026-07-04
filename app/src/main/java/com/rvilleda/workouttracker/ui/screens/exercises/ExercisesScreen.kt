@@ -18,11 +18,18 @@ import com.rvilleda.workouttracker.ui.screens.exercises.components.TabRowHeader
 import com.rvilleda.workouttracker.ui.screens.exercises.tabs.ExercisesTabContent
 import androidx.compose.ui.graphics.RectangleShape
 import com.rvilleda.workouttracker.model.MuscleGroup
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.ui.Alignment
+import com.rvilleda.workouttracker.ui.components.CreateExerciseCard
+import com.rvilleda.workouttracker.ui.components.ExerciseCard
+import androidx.compose.foundation.lazy.items
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExercisesScreen(
     onAddToWorkout: (Set<Exercise>) -> Unit,
+    onCreateWorkout: (Set<Exercise>) -> Unit,
+    isWorkoutActive: Boolean,
     onCreateCustomExercise: () -> Unit,
     onBack: () -> Unit,
     viewModel: ExerciseViewModel
@@ -35,14 +42,27 @@ fun ExercisesScreen(
 
     val selectedExercises by viewModel.selectedExercises.collectAsState()
     val selectionMode by viewModel.selectionMode.collectAsState()
-
     val allDbExercises by viewModel.exercises.collectAsState()
-    val chestExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.CHEST }
-    val backExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.BACK }
-    val legsExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.LEGS }
-    val shouldersExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.SHOULDERS }
-    val armsExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.ARMS }
-    val coreExercises = allDbExercises.filter { it.muscleGroup == MuscleGroup.CORE }
+
+    val displayedExercises = remember(searchQuery, selectedTab, allDbExercises) {
+        if (searchQuery.isNotEmpty()) {
+            allDbExercises.filter { exercise ->
+                exercise.name.contains(searchQuery, ignoreCase = true) ||
+                        exercise.muscleGroup.displayName.contains(searchQuery, ignoreCase = true) ||
+                        exercise.equipment.displayName.contains(searchQuery, ignoreCase = true) ||
+                        exercise.movementType.displayName.contains(searchQuery, ignoreCase = true)
+            }
+        } else {
+            when (selectedTab) {
+                ExercisesTabs.CHEST -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CHEST }
+                ExercisesTabs.BACK -> allDbExercises.filter { it.muscleGroup == MuscleGroup.BACK }
+                ExercisesTabs.LEGS -> allDbExercises.filter { it.muscleGroup == MuscleGroup.LEGS }
+                ExercisesTabs.SHOULDERS -> allDbExercises.filter { it.muscleGroup == MuscleGroup.SHOULDERS }
+                ExercisesTabs.ARMS -> allDbExercises.filter { it.muscleGroup == MuscleGroup.ARMS }
+                ExercisesTabs.CORE -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CORE }
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -80,7 +100,11 @@ fun ExercisesScreen(
             if (selectedExercises.isNotEmpty() && selectionMode) {
                 Button(
                     onClick = {
-                        onAddToWorkout(selectedExercises)
+                        if(isWorkoutActive){
+                            onAddToWorkout(selectedExercises)
+                        } else {
+                            onCreateWorkout(selectedExercises)
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RectangleShape, // Removes the rounded corners completely
@@ -93,68 +117,71 @@ fun ExercisesScreen(
     ) { padding ->
 
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if(searchQuery.isNotEmpty()) {
-                ExercisesTabContent.Search(
-                    allExercises = allDbExercises,
-                    searchQuery = searchQuery,
-                    selectedExercises = selectedExercises,
-                    onToggleSelection = { viewModel.toggleSelection(it) },
-                    selectionMode = selectionMode,
-                    onToggleSelectionMode = { viewModel.toggleSelectionMode() },
-                    onCreateCustomExercise = onCreateCustomExercise
-                )
-            } else {
-                when (selectedTab) {
-                    ExercisesTabs.CHEST -> ExercisesTabContent.Chest(
-                        chestExercises = chestExercises,
-                        selectedExercises = selectedExercises,
-                        onToggleSelection = { viewModel.toggleSelection(it) },
-                        selectionMode = selectionMode,
-                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
-                        )
+            ExerciseList(
+                exercises = displayedExercises,
+                isWorkoutActive = isWorkoutActive,
+                selectedExercises = selectedExercises,
+                selectionMode = selectionMode,
+                onToggleSelection = viewModel::toggleSelection,
+                onToggleSelectionMode = viewModel::toggleSelectionMode,
+                onCreateCustomExercise = onCreateCustomExercise,
+                onAddToWorkout = onAddToWorkout
+            )
+        }
+    }
+}
 
-                    ExercisesTabs.BACK -> ExercisesTabContent.Back(
-                        backExercises = backExercises,
-                        selectedExercises = selectedExercises,
-                        onToggleSelection = { viewModel.toggleSelection(it) },
-                        selectionMode = selectionMode,
-                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
-                    )
-
-
-                    ExercisesTabs.LEGS -> ExercisesTabContent.Legs(
-                        legsExercises = legsExercises,
-                        selectedExercises = selectedExercises,
-                        onToggleSelection = { viewModel.toggleSelection(it) },
-                        selectionMode = selectionMode,
-                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
-                    )
-
-
-                    ExercisesTabs.SHOULDERS -> ExercisesTabContent.Shoulders(
-                        shouldersExercises = shouldersExercises,
-                        selectedExercises = selectedExercises,
-                        onToggleSelection = { viewModel.toggleSelection(it) },
-                        selectionMode = selectionMode,
-                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
-                    )
-
-                    ExercisesTabs.ARMS -> ExercisesTabContent.Arms(
-                        armsExercises = armsExercises,
-                        selectedExercises = selectedExercises,
-                        onToggleSelection = { viewModel.toggleSelection(it) },
-                        selectionMode = selectionMode,
-                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
-                    )
-
-                    ExercisesTabs.CORE -> ExercisesTabContent.Core(
-                        coreExercises = coreExercises,
-                        selectedExercises = selectedExercises,
-                        onToggleSelection = { viewModel.toggleSelection(it) },
-                        selectionMode = selectionMode,
-                        onToggleSelectionMode = { viewModel.toggleSelectionMode() }
-                    )
+@Composable
+fun ExerciseList(
+    exercises: List<Exercise>,
+    isWorkoutActive: Boolean,
+    selectedExercises: Set<Exercise>,
+    selectionMode: Boolean,
+    onToggleSelection: (Exercise) -> Unit,
+    onToggleSelectionMode: () -> Unit,
+    onAddToWorkout: (Set<Exercise>) -> Unit,
+    onCreateCustomExercise: (() -> Unit)? = null
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (exercises.isEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("No exercises found")
                 }
+            }
+            item {
+                CreateExerciseCard(onClick = { onCreateCustomExercise?.invoke() })
+            }
+        } else {
+            items(exercises, key = { it.id }) { exercise ->
+                ExerciseCard(
+                    exercise = exercise,
+                    isSelected = selectedExercises.contains(exercise),
+                    isSelectionModeActive = selectionMode,
+                    onItemLongClick = {
+                        onToggleSelectionMode()
+                        if (!selectedExercises.contains(exercise)) {
+                            onToggleSelection(exercise)
+                        }
+                    },
+                    onItemClick = {
+                        if (selectionMode) {
+                            onToggleSelection(exercise)
+                        } else if (isWorkoutActive) {
+                            onAddToWorkout(setOf(exercise))
+                        } else {
+                            // Go to exercise details screen
+                        }
+                    }
+                )
             }
         }
     }

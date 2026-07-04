@@ -273,13 +273,10 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         }
     }
 
-    // 2. DELETE ENTIRE EXERCISE
     fun removeExerciseFromSession(exerciseId: String) {
         _activeExercises.value = _activeExercises.value.filterNot { it.id == exerciseId }
     }
 
-
-// 3. REARRANGE EXERCISES (Drag and Drop)
     fun moveExerciseByKey(fromId: String, toId: String) {
         _activeExercises.update { currentList ->
             val mutableList = currentList.toMutableList()

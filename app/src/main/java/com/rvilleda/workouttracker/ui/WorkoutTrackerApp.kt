@@ -137,19 +137,19 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao) {
 
                                 ExercisesScreen(
                                     onAddToWorkout = { exercises ->
-                                        if (isWorkoutActive) {
-                                            exercises.forEach { exercise ->
-                                                sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
-                                            }
-                                            navController.navigate("active_workout_screen")
-                                        } else {
-                                            sharedActiveWorkoutViewModel.startNewEmptyWorkout()
-                                            exercises.forEach { exercise ->
-                                                sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
-                                            }
-                                            navController.navigate("active_workout_screen")
+                                        exercises.forEach { exercise ->
+                                            sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
                                         }
+                                        navController.navigate("active_workout_screen")
                                     },
+                                    onCreateWorkout = { exercises ->
+                                        sharedActiveWorkoutViewModel.startNewEmptyWorkout()
+                                        exercises.forEach { exercise ->
+                                            sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
+                                        }
+                                        navController.navigate("active_workout_screen")
+                                    },
+                                    isWorkoutActive = isWorkoutActive,
                                     onCreateCustomExercise = { navController.navigate("create_custom_exercise") },
                                     onBack = { currentDestination = AppDestinations.HOME },
                                     viewModel = exerciseViewModel
@@ -273,6 +273,14 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao) {
                     }
                     navController.popBackStack()
                 },
+                onCreateWorkout = { exercises ->
+                    sharedActiveWorkoutViewModel.startNewEmptyWorkout()
+                    exercises.forEach { exercise ->
+                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
+                    }
+                    navController.popBackStack()
+                },
+                isWorkoutActive = isWorkoutActive,
                 onCreateCustomExercise = { navController.navigate("create_custom_exercise") },
                 onBack = { navController.popBackStack() },
                 viewModel = exerciseViewModel
