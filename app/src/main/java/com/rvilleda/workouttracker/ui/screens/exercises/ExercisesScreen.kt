@@ -15,7 +15,6 @@ import com.rvilleda.workouttracker.R
 import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.ui.screens.exercises.components.ExercisesTabs
 import com.rvilleda.workouttracker.ui.screens.exercises.components.TabRowHeader
-import com.rvilleda.workouttracker.ui.screens.exercises.tabs.ExercisesTabContent
 import androidx.compose.ui.graphics.RectangleShape
 import com.rvilleda.workouttracker.model.MuscleGroup
 import androidx.compose.foundation.lazy.LazyColumn
