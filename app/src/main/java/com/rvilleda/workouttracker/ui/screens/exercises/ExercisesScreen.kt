@@ -9,9 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.rvilleda.workouttracker.R
 import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.ui.screens.exercises.components.ExercisesTopTabs
 import com.rvilleda.workouttracker.ui.screens.exercises.components.TabRowHeader
@@ -24,11 +22,6 @@ import com.rvilleda.workouttracker.ui.components.ExerciseCard
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import com.rvilleda.workouttracker.ui.screens.home.components.HomeTopTabs
-import com.rvilleda.workouttracker.ui.screens.home.tabs.AICoach
-import com.rvilleda.workouttracker.ui.screens.home.tabs.DashboardTab
-import com.rvilleda.workouttracker.ui.screens.home.tabs.ProgressTab
-import com.rvilleda.workouttracker.ui.screens.home.tabs.RoutinesTab
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +38,6 @@ fun ExercisesScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topBarState)
 
     var searchQuery by remember { mutableStateOf("") }
-    var selectedTab by remember { mutableStateOf(ExercisesTopTabs.CHEST) }
 
     val pagerState = rememberPagerState(pageCount = { ExercisesTopTabs.entries.size })
     val coroutineScope = rememberCoroutineScope()
@@ -54,7 +46,7 @@ fun ExercisesScreen(
     val selectionMode by viewModel.selectionMode.collectAsState()
     val allDbExercises by viewModel.exercises.collectAsState()
 
-    val displayedExercises : List<Exercise> = remember(searchQuery, pagerState.currentPage, allDbExercises) {
+    val searchFilteredExercises = remember(searchQuery, allDbExercises) {
         if (searchQuery.isNotEmpty()) {
             allDbExercises.filter { exercise ->
                 exercise.name.contains(searchQuery, ignoreCase = true) ||
@@ -63,21 +55,12 @@ fun ExercisesScreen(
                         exercise.movementType.displayName.contains(searchQuery, ignoreCase = true)
             }
         } else {
-            when (pagerState.currentPage) {
-                0 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CHEST }
-                1 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.BACK }
-                2 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.LEGS }
-                3 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.SHOULDERS }
-                4 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.ARMS }
-                5 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CORE }
-                else -> emptyList()
-            }
+            allDbExercises // If no search, pass the whole DB down to the Pager
         }
     }
 
     Scaffold(
-        modifier = Modifier
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             Column {
                 TopAppBar(
@@ -85,7 +68,9 @@ fun ExercisesScreen(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            modifier = Modifier.fillMaxWidth().padding(end = 16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(end = 16.dp),
                             placeholder = { Text("Search exercises...") },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                             singleLine = true,
@@ -99,7 +84,8 @@ fun ExercisesScreen(
                     },
                     scrollBehavior = scrollBehavior
                 )
-                if(searchQuery.length == 0) {
+                // 2. Hide tabs when searching, as search results span all muscle groups
+                if (searchQuery.isEmpty()) {
                     TabRowHeader(
                         selectedTabIndex = pagerState.currentPage,
                         onTabSelected = { index ->
@@ -115,41 +101,65 @@ fun ExercisesScreen(
             if (selectedExercises.isNotEmpty() && selectionMode) {
                 Button(
                     onClick = {
-                        if(isWorkoutActive){
-                            onAddToWorkout(selectedExercises)
-                        } else {
-                            onCreateWorkout(selectedExercises)
-                        }
+                        if (isWorkoutActive) onAddToWorkout(selectedExercises)
+                        else onCreateWorkout(selectedExercises)
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RectangleShape, // Removes the rounded corners completely
-                    contentPadding = PaddingValues(vertical = 16.dp) // Makes the button a bit taller and easier to tap
+                    shape = RectangleShape,
+                    contentPadding = PaddingValues(vertical = 16.dp)
                 ) {
                     Text("Add ${selectedExercises.size} Exercises to Workout")
                 }
             }
         }
     ) { padding ->
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            ExerciseList(
-                exercises = displayedExercises,
-                isWorkoutActive = isWorkoutActive,
-                selectedExercises = selectedExercises,
-                selectionMode = selectionMode,
-                onToggleSelection = viewModel::toggleSelection,
-                onToggleSelectionMode = viewModel::toggleSelectionMode,
-                onCreateCustomExercise = onCreateCustomExercise,
-                onAddToWorkout = onAddToWorkout
-            )
+        if (searchQuery.isNotEmpty()) {
+            Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+                ExerciseList(
+                    exercises = searchFilteredExercises,
+                    isWorkoutActive = isWorkoutActive,
+                    selectedExercises = selectedExercises,
+                    selectionMode = selectionMode,
+                    onToggleSelection = viewModel::toggleSelection,
+                    onToggleSelectionMode = viewModel::toggleSelectionMode,
+                    onCreateCustomExercise = onCreateCustomExercise,
+                    onAddToWorkout = onAddToWorkout
+                )
+            }
+        } else {
+            // 4. If NOT searching, use the Pager and filter dynamically per page
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+            ) { page ->
+                val pageSpecificExercises = remember(allDbExercises, page) {
+                    when (page) {
+                        0 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CHEST }
+                        1 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.BACK }
+                        2 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.LEGS }
+                        3 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.SHOULDERS }
+                        4 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.ARMS }
+                        5 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CORE }
+                        else -> emptyList()
+                    }
+                }
+
+                ExerciseList(
+                    exercises = pageSpecificExercises,
+                    isWorkoutActive = isWorkoutActive,
+                    selectedExercises = selectedExercises,
+                    selectionMode = selectionMode,
+                    onToggleSelection = viewModel::toggleSelection,
+                    onToggleSelectionMode = viewModel::toggleSelectionMode,
+                    onCreateCustomExercise = onCreateCustomExercise,
+                    onAddToWorkout = onAddToWorkout
+                )
+            }
         }
     }
 }
-
 @Composable
 fun ExerciseList(
     exercises: List<Exercise>,
