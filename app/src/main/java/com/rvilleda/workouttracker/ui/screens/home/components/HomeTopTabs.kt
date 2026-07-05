@@ -1,45 +1,30 @@
 package com.rvilleda.workouttracker.ui.screens.home.components
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 
-enum class TopTab(val route: String, val label: String) {
-    FOR_YOU("for_you", "For You"),
-    TOP_EXERCISES("top_exercises", "Top Exercises"),
-    TOP_ROUTINES("top_routines", "Top Routines"),
-    TUTORIALS("tutorials", "Tutorials")
+enum class HomeTopTabs(val route: String, val label: String) {
+    DASHBOARD("dashboard", "Dashboard"),
+    ROUTINES("routines", "Routines"),
+    PROGRESS("progress", "Progress"),
+    AI_COACH("ai_coach", "AI Coach")
 }
 
 @Composable
-fun TopTabs(navController: NavHostController, currentRoute: String?) {
-    val selectedIndex = TopTab.entries.indexOfFirst { it.route == currentRoute }.coerceAtLeast(0)
-
-    ScrollableTabRow(
-        selectedTabIndex = selectedIndex,
-        modifier = Modifier.fillMaxWidth(),
-        edgePadding = 6.dp
+fun TabRowHeader(
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit
+) {
+    TabRow(
+        selectedTabIndex = selectedTabIndex
     ) {
-        TopTab.entries.forEachIndexed { index, tab ->
+        HomeTopTabs.entries.forEachIndexed { index, tab ->
             Tab(
-                selected = index == selectedIndex,
-                onClick = {
-                    if (currentRoute != tab.route) {
-                        navController.navigate(tab.route) {
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                },
-                text = { Text(tab.label) }
+                selected = selectedTabIndex == index,
+                onClick = { onTabSelected(index) },
+                text = { Text(text = tab.label) }
             )
         }
     }

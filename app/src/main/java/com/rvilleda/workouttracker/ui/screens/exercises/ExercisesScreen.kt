@@ -13,7 +13,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.rvilleda.workouttracker.R
 import com.rvilleda.workouttracker.model.Exercise
-import com.rvilleda.workouttracker.ui.screens.exercises.components.ExercisesTabs
+import com.rvilleda.workouttracker.ui.screens.exercises.components.ExercisesTopTabs
 import com.rvilleda.workouttracker.ui.screens.exercises.components.TabRowHeader
 import androidx.compose.ui.graphics.RectangleShape
 import com.rvilleda.workouttracker.model.MuscleGroup
@@ -22,6 +22,14 @@ import androidx.compose.ui.Alignment
 import com.rvilleda.workouttracker.ui.components.CreateExerciseCard
 import com.rvilleda.workouttracker.ui.components.ExerciseCard
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import com.rvilleda.workouttracker.ui.screens.home.components.HomeTopTabs
+import com.rvilleda.workouttracker.ui.screens.home.tabs.AICoach
+import com.rvilleda.workouttracker.ui.screens.home.tabs.DashboardTab
+import com.rvilleda.workouttracker.ui.screens.home.tabs.ProgressTab
+import com.rvilleda.workouttracker.ui.screens.home.tabs.RoutinesTab
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,13 +45,16 @@ fun ExercisesScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topBarState)
 
     var searchQuery by remember { mutableStateOf("") }
-    var selectedTab by remember { mutableStateOf(ExercisesTabs.CHEST) }
+    var selectedTab by remember { mutableStateOf(ExercisesTopTabs.CHEST) }
+
+    val pagerState = rememberPagerState(pageCount = { ExercisesTopTabs.entries.size })
+    val coroutineScope = rememberCoroutineScope()
 
     val selectedExercises by viewModel.selectedExercises.collectAsState()
     val selectionMode by viewModel.selectionMode.collectAsState()
     val allDbExercises by viewModel.exercises.collectAsState()
 
-    val displayedExercises = remember(searchQuery, selectedTab, allDbExercises) {
+    val displayedExercises : List<Exercise> = remember(searchQuery, pagerState.currentPage, allDbExercises) {
         if (searchQuery.isNotEmpty()) {
             allDbExercises.filter { exercise ->
                 exercise.name.contains(searchQuery, ignoreCase = true) ||
@@ -52,13 +63,14 @@ fun ExercisesScreen(
                         exercise.movementType.displayName.contains(searchQuery, ignoreCase = true)
             }
         } else {
-            when (selectedTab) {
-                ExercisesTabs.CHEST -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CHEST }
-                ExercisesTabs.BACK -> allDbExercises.filter { it.muscleGroup == MuscleGroup.BACK }
-                ExercisesTabs.LEGS -> allDbExercises.filter { it.muscleGroup == MuscleGroup.LEGS }
-                ExercisesTabs.SHOULDERS -> allDbExercises.filter { it.muscleGroup == MuscleGroup.SHOULDERS }
-                ExercisesTabs.ARMS -> allDbExercises.filter { it.muscleGroup == MuscleGroup.ARMS }
-                ExercisesTabs.CORE -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CORE }
+            when (pagerState.currentPage) {
+                0 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CHEST }
+                1 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.BACK }
+                2 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.LEGS }
+                3 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.SHOULDERS }
+                4 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.ARMS }
+                5 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CORE }
+                else -> emptyList()
             }
         }
     }
@@ -89,8 +101,12 @@ fun ExercisesScreen(
                 )
                 if(searchQuery.length == 0) {
                     TabRowHeader(
-                        currentTab = selectedTab,
-                        onTabSelected = { newTab -> selectedTab = newTab }
+                        selectedTabIndex = pagerState.currentPage,
+                        onTabSelected = { index ->
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
+                        }
                     )
                 }
             }
@@ -114,8 +130,12 @@ fun ExercisesScreen(
             }
         }
     ) { padding ->
-
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
             ExerciseList(
                 exercises = displayedExercises,
                 isWorkoutActive = isWorkoutActive,
