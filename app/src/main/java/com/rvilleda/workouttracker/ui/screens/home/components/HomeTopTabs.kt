@@ -1,9 +1,11 @@
 package com.rvilleda.workouttracker.ui.screens.home.components
 
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 
 enum class HomeTopTabs(val route: String, val label: String) {
     DASHBOARD("dashboard", "Dashboard"),
@@ -17,8 +19,9 @@ fun TabRowHeader(
     selectedTabIndex: Int,
     onTabSelected: (Int) -> Unit
 ) {
-    TabRow(
-        selectedTabIndex = selectedTabIndex
+    ScrollableTabRow(
+        selectedTabIndex = selectedTabIndex,
+        edgePadding = 8.dp
     ) {
         HomeTopTabs.entries.forEachIndexed { index, tab ->
             Tab(
