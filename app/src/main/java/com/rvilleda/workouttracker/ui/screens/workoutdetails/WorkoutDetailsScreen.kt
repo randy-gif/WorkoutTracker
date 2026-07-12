@@ -24,6 +24,7 @@ import java.util.Locale
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.text.font.FontWeight
 import com.rvilleda.workouttracker.data.database.entity.workout.FullWorkout
+import com.rvilleda.workouttracker.model.ExerciseSet
 import com.rvilleda.workouttracker.model.WeightUnit
 import com.rvilleda.workouttracker.model.calculateTotalWorkoutVolume
 import java.time.Instant
@@ -51,6 +52,24 @@ fun WorkoutDetailsScreen(
         val fetchedWorkout = workoutDao.getFullWorkoutById(workoutId)
         if (fetchedWorkout != null) {
             workout = fetchedWorkout.workout
+
+            exercises = fetchedWorkout.exercises.map { exerciseWithSets ->
+                ExerciseInSession(
+                    id = exerciseWithSets.exercise.id,
+                    baseExerciseId = exerciseWithSets.exercise.baseExerciseId,
+                    exerciseName = exerciseWithSets.exercise.exerciseName,
+                    sets = exerciseWithSets.sets.map { setEntity ->
+                        ExerciseSet(
+                            id = setEntity.id,
+                            weight = setEntity.weight.toInt().toString(),
+                            reps = setEntity.reps.toString(),
+                            rpe = setEntity.rpe,
+                            isCompleted = setEntity.isCompleted,
+                            weightUnit = globalUnit
+                        )
+                    }
+                )
+            }
         }
     }
 
