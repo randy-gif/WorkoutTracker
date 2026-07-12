@@ -1,18 +1,13 @@
 package com.rvilleda.workouttracker.ui.screens.exercises
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.rvilleda.workouttracker.data.database.ExerciseDao
-import com.rvilleda.workouttracker.model.Equipment
+import com.rvilleda.workouttracker.data.database.dao.ExerciseDao
+import com.rvilleda.workouttracker.data.repository.ExerciseRepository
 import com.rvilleda.workouttracker.model.Exercise
-import com.rvilleda.workouttracker.model.MovementType
-import com.rvilleda.workouttracker.model.MuscleGroup
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.Flow
 
 class ExerciseViewModel(private val exerciseDao: ExerciseDao) : ViewModel() {
 
@@ -21,23 +16,7 @@ class ExerciseViewModel(private val exerciseDao: ExerciseDao) : ViewModel() {
     val selectedExercises: StateFlow<Set<Exercise>> = _selectedExercises.asStateFlow()
     val selectionMode: StateFlow<Boolean> = _selectionMode.asStateFlow()
 
-    val exercises: StateFlow<List<Exercise>> = exerciseDao.getAllExercises()
-        .map { entities ->
-            entities.map { entity ->
-                Exercise(
-                    id = entity.id,
-                    name = entity.name,
-                    muscleGroup = runCatching { MuscleGroup.valueOf(entity.muscleGroup) }.getOrDefault(MuscleGroup.CHEST),
-                    equipment = runCatching { Equipment.valueOf(entity.equipment) }.getOrDefault(Equipment.BARBELL),
-                    movementType = runCatching { MovementType.valueOf(entity.movementType) }.getOrDefault(MovementType.COMPOUND)
-                )
-            }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    val exercises: Flow<List<Exercise>> = ExerciseRepository(exerciseDao).getAllExercises()
 
     // 2. Accept the whole object as a parameter
     fun toggleSelection(exercise: Exercise) {

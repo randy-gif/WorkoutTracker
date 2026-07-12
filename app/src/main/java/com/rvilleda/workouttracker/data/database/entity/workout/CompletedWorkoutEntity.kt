@@ -1,4 +1,4 @@
-package com.rvilleda.workouttracker.data.database
+package com.rvilleda.workouttracker.data.database.entity.workout
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -9,5 +9,4 @@ data class CompletedWorkoutEntity(
     val name: String,
     val dateCompleted: Long,
     val durationMs: Long,
-    val exercisesJson: String
 )

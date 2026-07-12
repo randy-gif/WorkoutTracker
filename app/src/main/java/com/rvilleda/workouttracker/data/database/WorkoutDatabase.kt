@@ -4,75 +4,47 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
-import com.rvilleda.workouttracker.model.allExercises
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-// Make sure to import your allExercises list here!
-// import com.rvilleda.workouttracker.model.allExercises
+import androidx.room.TypeConverters
+import com.rvilleda.workouttracker.data.database.dao.ExerciseDao
+import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
+import com.rvilleda.workouttracker.data.database.entity.workout.CompletedWorkoutEntity
+import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutExerciseEntity
+import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutSetEntity
+import com.rvilleda.workouttracker.data.database.entity.exercise.CustomExerciseEntity
+
 
 @Database(
     entities = [
         CompletedWorkoutEntity::class,
-        CustomExerciseEntity::class // 1. Added the new table here!
+        WorkoutExerciseEntity::class,
+        WorkoutSetEntity::class,
+        CustomExerciseEntity::class,
     ],
-    version = 4, // 2. Bumped version to 4 because the schema changed
+    version = 6,
     exportSchema = false
 )
+@TypeConverters(Converters::class)
 abstract class WorkoutDatabase : RoomDatabase() {
 
-    // These tell the database about your clerks (DAOs)
     abstract fun workoutDao(): WorkoutDao
-    abstract fun exerciseDao(): ExerciseDao // 3. Added the new DAO here!
+    abstract fun exerciseDao(): ExerciseDao
 
-    // The Companion Object acts as our "Builder"
     companion object {
         @Volatile
         private var INSTANCE: WorkoutDatabase? = null
 
-        fun getDatabase(context: Context, scope: CoroutineScope): WorkoutDatabase {
-            // If the INSTANCE is not null, then return it,
-            // if it is, then create the database
+        // Removed the CoroutineScope parameter since we no longer need background prepopulation
+        fun getDatabase(context: Context): WorkoutDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     WorkoutDatabase::class.java,
                     "workout_database"
                 )
-                    // 4. The Prepopulation Callback
-                    .addCallback(object : RoomDatabase.Callback() {
-                        override fun onCreate(db: SupportSQLiteDatabase) {
-                            super.onCreate(db)
-
-                            // We launch a coroutine to do this in the background
-                            INSTANCE?.let { database ->
-                                scope.launch(Dispatchers.IO) {
-                                    val dao = database.exerciseDao()
-
-                                    // Map your Kotlin list to Room Entities
-                                    val defaultEntities = allExercises.map { exercise ->
-                                        CustomExerciseEntity(
-                                            id = exercise.id,
-                                            name = exercise.name,
-                                            muscleGroup = exercise.muscleGroup.name,
-                                            equipment = exercise.equipment.name,
-                                            movementType = exercise.movementType.name
-                                        )
-                                    }
-
-                                    // Insert them all!
-                                    dao.insertAllExercises(defaultEntities)
-                                }
-                            }
-                        }
-                    })
-                    // Since you are in development, this prevents crashes when you change tables
                     .fallbackToDestructiveMigration()
                     .build()
 
                 INSTANCE = instance
-                // return instance
                 instance
             }
         }

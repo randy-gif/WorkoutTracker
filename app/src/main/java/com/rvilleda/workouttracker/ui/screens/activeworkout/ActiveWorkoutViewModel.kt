@@ -11,8 +11,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
-import com.rvilleda.workouttracker.data.database.WorkoutDao
-import com.rvilleda.workouttracker.data.database.CompletedWorkoutEntity
+import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
+import com.rvilleda.workouttracker.data.database.entity.workout.CompletedWorkoutEntity
+import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutExerciseEntity
+import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutSetEntity
 import com.rvilleda.workouttracker.model.WeightUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
@@ -363,18 +365,48 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     fun saveWorkout(workoutName: String) {
         viewModelScope.launch {
+            val workoutId = UUID.randomUUID().toString()
 
-            val jsonString = Gson().toJson(_activeExercises.value)
-
-            val newEntity = CompletedWorkoutEntity(
-                id = UUID.randomUUID().toString(),
+            val workoutEntity = CompletedWorkoutEntity(
+                id = workoutId,
                 name = workoutName,
                 dateCompleted = System.currentTimeMillis(),
-                durationMs = System.currentTimeMillis() - startTime,
-                exercisesJson = jsonString
+                durationMs = System.currentTimeMillis() - startTime
             )
 
-            workoutDao.insertWorkout(newEntity)
+            val exerciseEntities = mutableListOf<WorkoutExerciseEntity>()
+            val setEntities = mutableListOf<WorkoutSetEntity>()
+
+            _activeExercises.value.forEachIndexed { exerciseIndex, activeExercise ->
+                val workoutExerciseId = UUID.randomUUID().toString()
+                exerciseEntities.add(
+                    WorkoutExerciseEntity(
+                        id = workoutExerciseId,
+                        workoutId = workoutId,
+                        baseExerciseId = activeExercise.baseExerciseId,
+                        exerciseName = activeExercise.exerciseName,
+                        orderInWorkout = exerciseIndex
+                    )
+                )
+
+                activeExercise.sets.forEachIndexed { setIndex, set ->
+                    if (set.isCompleted) {
+                        setEntities.add(
+                            WorkoutSetEntity(
+                                id = UUID.randomUUID().toString(),
+                                workoutExerciseId = workoutExerciseId,
+                                setNumber = setIndex + 1,
+                                weight = set.weight.toFloatOrNull() ?: 0f,
+                                reps = set.reps.toIntOrNull() ?: 0,
+                                rpe = set.rpe,
+                                isCompleted = true
+                            )
+                        )
+                    }
+                }
+            }
+
+            workoutDao.saveFullWorkout(workoutEntity, exerciseEntities, setEntities)
         }
     }
 

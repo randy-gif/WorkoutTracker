@@ -92,7 +92,7 @@ fun ExerciseCard(
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
-                        text = exercise.muscleGroup.toString(),
+                        text = exercise.primaryMuscle.displayName,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer

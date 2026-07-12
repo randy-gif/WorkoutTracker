@@ -24,8 +24,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // 2. FIX: Use the Singleton we created!
-        // We pass lifecycleScope so Room can run the pre-population in the background
-        val db = WorkoutDatabase.getDatabase(applicationContext, lifecycleScope)
+        val db = WorkoutDatabase.getDatabase(applicationContext)
 
         // Grab both DAOs
         val workoutDao = db.workoutDao()

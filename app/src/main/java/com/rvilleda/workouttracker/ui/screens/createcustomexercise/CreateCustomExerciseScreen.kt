@@ -7,13 +7,11 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.rvilleda.workouttracker.model.Equipment
-import com.rvilleda.workouttracker.model.MuscleGroup
-import com.rvilleda.workouttracker.model.MovementType
+import com.rvilleda.workouttracker.model.TargetMuscle
 import com.rvilleda.workouttracker.ui.screens.exercises.CreateCustomExerciseViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,7 +28,7 @@ fun CreateCustomExerciseScreen(
     val notes by viewModel.notes.collectAsState()
     val isSaveEnabled by viewModel.isSaveEnabled.collectAsState()
 
-    val muscleGroups = MuscleGroup.values()
+    val targetMuscles = TargetMuscle.values()
     val equipmentList = Equipment.values()
 
     Scaffold(
@@ -92,7 +90,7 @@ fun CreateCustomExerciseScreen(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    muscleGroups.forEach { muscle ->
+                    targetMuscles.forEach { muscle ->
                         FilterChip(
                             selected = selectedMuscle == muscle,
                             onClick = { viewModel.updateMuscle(muscle) },

@@ -1,6 +1,5 @@
 package com.rvilleda.workouttracker.ui.screens.exercises
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -11,10 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.rvilleda.workouttracker.model.Exercise
-import com.rvilleda.workouttracker.ui.screens.exercises.components.ExercisesTopTabs
 import com.rvilleda.workouttracker.ui.screens.exercises.components.TabRowHeader
 import androidx.compose.ui.graphics.RectangleShape
-import com.rvilleda.workouttracker.model.MuscleGroup
+import com.rvilleda.workouttracker.model.TargetMuscle
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.Alignment
 import com.rvilleda.workouttracker.ui.components.CreateExerciseCard
@@ -22,6 +20,7 @@ import com.rvilleda.workouttracker.ui.components.ExerciseCard
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import com.rvilleda.workouttracker.model.MuscleGroup
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,20 +38,22 @@ fun ExercisesScreen(
 
     var searchQuery by remember { mutableStateOf("") }
 
-    val pagerState = rememberPagerState(pageCount = { ExercisesTopTabs.entries.size })
+    val pagerState = rememberPagerState(pageCount = { TargetMuscle.entries.size })
     val coroutineScope = rememberCoroutineScope()
 
     val selectedExercises by viewModel.selectedExercises.collectAsState()
     val selectionMode by viewModel.selectionMode.collectAsState()
-    val allDbExercises by viewModel.exercises.collectAsState()
+    val allDbExercises by viewModel.exercises.collectAsState(emptyList())
 
     val searchFilteredExercises = remember(searchQuery, allDbExercises) {
         if (searchQuery.isNotEmpty()) {
             allDbExercises.filter { exercise ->
                 exercise.name.contains(searchQuery, ignoreCase = true) ||
-                        exercise.muscleGroup.displayName.contains(searchQuery, ignoreCase = true) ||
+                        exercise.primaryMuscle.displayName.contains(searchQuery, ignoreCase = true) ||
+                        exercise.secondaryMuscles.any { it.displayName.contains(searchQuery, ignoreCase = true) } ||
                         exercise.equipment.displayName.contains(searchQuery, ignoreCase = true) ||
-                        exercise.movementType.displayName.contains(searchQuery, ignoreCase = true)
+                        exercise.movementPattern.name.contains(searchQuery, ignoreCase = true) ||
+                        exercise.fatigueTier.name.contains(searchQuery, ignoreCase = true)
             }
         } else {
             allDbExercises // If no search, pass the whole DB down to the Pager
@@ -136,12 +137,14 @@ fun ExercisesScreen(
             ) { page ->
                 val pageSpecificExercises = remember(allDbExercises, page) {
                     when (page) {
-                        0 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CHEST }
-                        1 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.BACK }
-                        2 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.LEGS }
-                        3 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.SHOULDERS }
-                        4 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.ARMS }
-                        5 -> allDbExercises.filter { it.muscleGroup == MuscleGroup.CORE }
+                        0 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.CHEST}
+                        1 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.BACK}
+                        2 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.ARMS}
+                        3 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.LEGS}
+                        4 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.SHOULDERS}
+                        5 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.CORE}
+                        6 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.CARDIO}
+                        7 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.FULL_BODY}
                         else -> emptyList()
                     }
                 }

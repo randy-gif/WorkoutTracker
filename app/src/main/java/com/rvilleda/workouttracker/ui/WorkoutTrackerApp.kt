@@ -31,7 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.rvilleda.workouttracker.data.database.WorkoutDao
+import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
 import com.rvilleda.workouttracker.ui.navigation.AppDestinations
 import com.rvilleda.workouttracker.ui.screens.activeworkout.ActiveWorkoutScreen
 import com.rvilleda.workouttracker.ui.screens.activeworkout.ActiveWorkoutViewModel
@@ -40,7 +40,7 @@ import com.rvilleda.workouttracker.ui.screens.exercises.ExercisesScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 import com.rvilleda.workouttracker.R
-import com.rvilleda.workouttracker.data.database.ExerciseDao
+import com.rvilleda.workouttracker.data.database.dao.ExerciseDao
 import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.ui.components.ActiveWorkoutBanner
 import com.rvilleda.workouttracker.ui.screens.exercises.CreateCustomExerciseViewModel

@@ -14,8 +14,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.rvilleda.workouttracker.data.database.CompletedWorkoutEntity
-import com.rvilleda.workouttracker.data.database.WorkoutDao
+import com.rvilleda.workouttracker.data.database.entity.workout.CompletedWorkoutEntity
+import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -23,6 +23,7 @@ import java.util.Date
 import java.util.Locale
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.text.font.FontWeight
+import com.rvilleda.workouttracker.data.database.entity.workout.FullWorkout
 import com.rvilleda.workouttracker.model.WeightUnit
 import com.rvilleda.workouttracker.model.calculateTotalWorkoutVolume
 import java.time.Instant
@@ -45,13 +46,11 @@ fun WorkoutDetailsScreen(
     var workout by remember { mutableStateOf<CompletedWorkoutEntity?>(null) }
     var exercises by remember { mutableStateOf<List<ExerciseInSession>>(emptyList()) }
 
-    // 1. Fetch the exact workout when the screen opens
+
     LaunchedEffect(workoutId) {
-        val fetchedWorkout = workoutDao.getWorkoutById(workoutId)
+        val fetchedWorkout = workoutDao.getFullWorkoutById(workoutId)
         if (fetchedWorkout != null) {
-            workout = fetchedWorkout
-            val type = object : TypeToken<List<ExerciseInSession>>() {}.type
-            exercises = Gson().fromJson(fetchedWorkout.exercisesJson, type)
+            workout = fetchedWorkout.workout
         }
     }
 

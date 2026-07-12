@@ -2,7 +2,7 @@ package com.rvilleda.workouttracker.ui.screens.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rvilleda.workouttracker.data.database.WorkoutDao
+import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +17,7 @@ import java.time.ZoneId
 class HistoryViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     // 1. Grab ALL workouts from the database
-    private val allWorkouts = workoutDao.getAllWorkouts()
+    private val allWorkouts = workoutDao.getWorkoutSummaries()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // 2. Transform them into a Set of unique Dates for the Calendar

@@ -8,6 +8,7 @@ data class ExerciseSet(
     val id: String = UUID.randomUUID().toString(),
     val weight: String = "",
     val reps: String = "",
+    val rpe: Float? = null,
     val isCompleted: Boolean = false,
     val weightUnit: WeightUnit = WeightUnit.LBS
 )
