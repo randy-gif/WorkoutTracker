@@ -26,9 +26,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExercisesScreen(
-    onAddToWorkout: (Set<Exercise>) -> Unit,
-    onCreateWorkout: (Set<Exercise>) -> Unit,
-    isWorkoutActive: Boolean,
+    onConfirmSelection: (Set<Exercise>) -> Unit,
     onCreateCustomExercise: () -> Unit,
     onBack: () -> Unit,
     viewModel: ExerciseViewModel
@@ -102,8 +100,7 @@ fun ExercisesScreen(
             if (selectedExercises.isNotEmpty() && selectionMode) {
                 Button(
                     onClick = {
-                        if (isWorkoutActive) onAddToWorkout(selectedExercises)
-                        else onCreateWorkout(selectedExercises)
+                        onConfirmSelection(selectedExercises)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RectangleShape,
@@ -118,13 +115,12 @@ fun ExercisesScreen(
             Box(modifier = Modifier.padding(padding).fillMaxSize()) {
                 ExerciseList(
                     exercises = searchFilteredExercises,
-                    isWorkoutActive = isWorkoutActive,
                     selectedExercises = selectedExercises,
                     selectionMode = selectionMode,
                     onToggleSelection = viewModel::toggleSelection,
                     onToggleSelectionMode = viewModel::toggleSelectionMode,
                     onCreateCustomExercise = onCreateCustomExercise,
-                    onAddToWorkout = onAddToWorkout
+                    onConfirmSelection = onConfirmSelection
                 )
             }
         } else {
@@ -151,13 +147,12 @@ fun ExercisesScreen(
 
                 ExerciseList(
                     exercises = pageSpecificExercises,
-                    isWorkoutActive = isWorkoutActive,
                     selectedExercises = selectedExercises,
                     selectionMode = selectionMode,
                     onToggleSelection = viewModel::toggleSelection,
                     onToggleSelectionMode = viewModel::toggleSelectionMode,
                     onCreateCustomExercise = onCreateCustomExercise,
-                    onAddToWorkout = onAddToWorkout
+                    onConfirmSelection = onConfirmSelection
                 )
             }
         }
@@ -166,12 +161,11 @@ fun ExercisesScreen(
 @Composable
 fun ExerciseList(
     exercises: List<Exercise>,
-    isWorkoutActive: Boolean,
     selectedExercises: Set<Exercise>,
     selectionMode: Boolean,
     onToggleSelection: (Exercise) -> Unit,
     onToggleSelectionMode: () -> Unit,
-    onAddToWorkout: (Set<Exercise>) -> Unit,
+    onConfirmSelection: (Set<Exercise>) -> Unit,
     onCreateCustomExercise: (() -> Unit)? = null
 ) {
     LazyColumn(
@@ -207,10 +201,8 @@ fun ExerciseList(
                     onItemClick = {
                         if (selectionMode) {
                             onToggleSelection(exercise)
-                        } else if (isWorkoutActive) {
-                            onAddToWorkout(setOf(exercise))
                         } else {
-                            // Go to exercise details screen
+                            onConfirmSelection(setOf(exercise))
                         }
                     }
                 )

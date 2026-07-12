@@ -19,11 +19,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.style.TextAlign
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import com.rvilleda.workouttracker.model.ExerciseSet
 import com.rvilleda.workouttracker.model.WeightUnit
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,12 +34,11 @@ fun CreateRoutineScreen(
     globalUnit: WeightUnit,
     onNavigateToExerciseSelection: () -> Unit,
     onSaveRoutine: (name: String) -> Unit, // Passes the routine name back to be saved
-    onDiscard: () -> Unit,
     onBack: () -> Unit,
     viewModel: CreateRoutineViewModel // You will need to create this ViewModel!
 ) {
     val routineExercises by viewModel.routineExercises.collectAsState()
-    var routineName by remember { mutableStateOf("") }
+    val routineName by viewModel.routineName.collectAsState()
 
     var showDiscardDialog by remember { mutableStateOf(false) }
 
@@ -55,7 +57,7 @@ fun CreateRoutineScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDiscard()
+                        onBack()
                         showDiscardDialog = false
                     }
                 ) {
@@ -105,7 +107,7 @@ fun CreateRoutineScreen(
             item {
                 OutlinedTextField(
                     value = routineName,
-                    onValueChange = { routineName = it },
+                    onValueChange = { viewModel.updateRoutineName(it) },
                     label = { Text("Routine Name") },
                     placeholder = { Text("e.g. Push Day, Full Body") },
                     singleLine = true,
@@ -325,41 +327,71 @@ fun RoutineSetInputRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 16.dp),
+            .padding(vertical = 6.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Set Number
         Text(
             text = "$setNumber",
             modifier = Modifier.width(24.dp),
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Target Weight
+        // Target Weight Field
         OutlinedTextField(
             value = set.weight,
             onValueChange = onWeightChange,
-            label = { Text("Target " + set.weightUnit.displayName) },
+            placeholder = {
+                Text("0", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+            },
+            trailingIcon = {
+                Text(
+                    text = set.weightUnit.displayName,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(end = 12.dp)
+                )
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
+            shape = RoundedCornerShape(8.dp),
+            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
             modifier = Modifier.weight(1f)
         )
 
-        // Target Reps
+        // Target Reps Field
         OutlinedTextField(
             value = set.reps,
             onValueChange = onRepsChange,
-            label = { Text("Target Reps") },
+            placeholder = {
+                Text("0", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+            },
+            trailingIcon = {
+                Text(
+                    text = "Reps",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(end = 12.dp)
+                )
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
+            shape = RoundedCornerShape(8.dp),
+            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
             modifier = Modifier.weight(1f)
         )
 
-        IconButton(onClick = onDelete) {
+        // Delete Button
+        IconButton(
+            onClick = onDelete,
+            modifier = Modifier.size(36.dp) // Slightly smaller touch target to save horizontal space
+        ) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Delete Set",
-                tint = MaterialTheme.colorScheme.error
+                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f) // Slightly faded error color
             )
         }
     }

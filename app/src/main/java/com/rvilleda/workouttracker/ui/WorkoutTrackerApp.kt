@@ -1,10 +1,10 @@
 package com.rvilleda.workouttracker.ui
 
 import CreateCustomExerciseScreen
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -35,14 +36,11 @@ import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
 import com.rvilleda.workouttracker.ui.navigation.AppDestinations
 import com.rvilleda.workouttracker.ui.screens.activeworkout.ActiveWorkoutScreen
 import com.rvilleda.workouttracker.ui.screens.activeworkout.ActiveWorkoutViewModel
-import com.rvilleda.workouttracker.ui.screens.data.ExercisesDataScreen
 import com.rvilleda.workouttracker.ui.screens.exercises.ExercisesScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
-import com.rvilleda.workouttracker.R
 import com.rvilleda.workouttracker.data.database.dao.ExerciseDao
 import com.rvilleda.workouttracker.data.database.dao.RoutineDao
-import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.ui.components.ActiveWorkoutBanner
 import com.rvilleda.workouttracker.ui.screens.createroutine.CreateRoutineScreen
 import com.rvilleda.workouttracker.ui.screens.createroutine.CreateRoutineViewModel
@@ -54,7 +52,6 @@ import com.rvilleda.workouttracker.ui.screens.settings.SettingsScreen
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsScreen
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsViewModel
 import com.rvilleda.workouttracker.ui.screens.settings.SettingsViewModel
-
 
 @Composable
 fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineDao: RoutineDao) {
@@ -109,7 +106,8 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
                                 val homeViewModel: HomeViewModel = viewModel(
                                     factory = object : androidx.lifecycle.ViewModelProvider.Factory {
                                         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                            return HomeViewModel(workoutDao) as T
+                                            // Pass BOTH DAOs now
+                                            return HomeViewModel(workoutDao, routineDao) as T
                                         }
                                     }
                                 )
@@ -137,20 +135,21 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
                                 }
 
                                 ExercisesScreen(
-                                    onAddToWorkout = { exercises ->
-                                        exercises.forEach { exercise ->
-                                            sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
+                                    onConfirmSelection = { exercises ->
+                                        if (!isWorkoutActive) {
+                                            sharedActiveWorkoutViewModel.startNewEmptyWorkout()
                                         }
-                                        navController.navigate("active_workout_screen")
-                                    },
-                                    onCreateWorkout = { exercises ->
-                                        sharedActiveWorkoutViewModel.startNewEmptyWorkout()
                                         exercises.forEach { exercise ->
-                                            sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
+                                            sharedActiveWorkoutViewModel.addExerciseToSession(
+                                                baseExerciseId = exercise.id,
+                                                exerciseName = exercise.name,
+                                                defaultUnit = globalUnit
+                                            )
                                         }
-                                        navController.navigate("active_workout_screen")
+                                        navController.navigate("active_workout_screen") {
+                                            popUpTo(AppDestinations.EXERCISES.name) { inclusive = true }
+                                        }
                                     },
-                                    isWorkoutActive = isWorkoutActive,
                                     onCreateCustomExercise = { navController.navigate("create_custom_exercise") },
                                     onBack = { currentDestination = AppDestinations.HOME },
                                     viewModel = exerciseViewModel
@@ -195,44 +194,33 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
                 }
             }
         }
-        composable(
-            route = "create_routine_screen",
-        ) {
-            val viewModel: CreateRoutineViewModel = viewModel(
-                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                        return CreateRoutineViewModel(routineDao) as T
-                    }
-                }
-            )
-            CreateRoutineScreen(
-                globalUnit = globalUnit,
-                onNavigateToExerciseSelection = { navController.navigate("add_exercise_to_workout") },
-                onSaveRoutine = { routineName ->
-                    viewModel.saveRoutine(routineName) {
-                        navController.popBackStack()
-                    }
-                },
-                onDiscard = { viewModel.discardRoutine() },
-                onBack = { navController.popBackStack() },
-                viewModel
-            )
 
-
-        }
         composable(
             route = "active_workout_screen",
             enterTransition = {
                 slideInVertically(
-                    initialOffsetY = { fullHeight -> (fullHeight * 0.8f).toInt() },
-                    animationSpec = tween(durationMillis = 300)
-                ) + fadeIn(animationSpec = tween(durationMillis = 300))
+                    // Start 100% off-screen at the very bottom
+                    initialOffsetY = { fullHeight -> fullHeight },
+                    // LinearOutSlowIn gives it that premium "starts fast, settles gently" Apple-like feel
+                    animationSpec = tween(durationMillis = 400, easing = LinearOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(durationMillis = 400))
             },
             popExitTransition = {
                 slideOutVertically(
-                    targetOffsetY = { fullHeight -> (fullHeight * 0.8f).toInt() },
-                    animationSpec = tween(durationMillis = 300)
-                ) + fadeOut(animationSpec = tween(durationMillis = 300))
+                    // Slide 100% off-screen back to the bottom
+                    targetOffsetY = { fullHeight -> fullHeight },
+                    // FastOutLinearIn makes it accelerate as it drops away
+                    animationSpec = tween(durationMillis = 350, easing = FastOutLinearInEasing)
+                ) + fadeOut(animationSpec = tween(durationMillis = 350))
+            },
+            // NEW: What happens to THIS screen when the user clicks "Add Exercise"?
+            exitTransition = {
+                // Keeps the workout screen perfectly still in the background while the selector slides over it
+                fadeOut(animationSpec = tween(durationMillis = 300))
+            },
+            // NEW: What happens when they come BACK from the "Add Exercise" screen?
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(durationMillis = 300))
             }
         ) {
 
@@ -258,7 +246,62 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
                 }
             )
         }
+        composable(route = "create_routine_screen") {
+            val viewModel: CreateRoutineViewModel = viewModel(
+                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        return CreateRoutineViewModel(routineDao) as T
+                    }
+                }
+            )
+            CreateRoutineScreen(
+                globalUnit = globalUnit,
+                onNavigateToExerciseSelection = { navController.navigate("add_exercise_to_routine") },
+                onSaveRoutine = { routineName ->
+                    viewModel.saveRoutine(routineName) {
+                        navController.popBackStack()
+                    }
+                },
+                onBack = { navController.popBackStack() },
+                viewModel
+            )
 
+
+        }
+        composable("add_exercise_to_routine") {
+
+            val exerciseViewModel : ExerciseViewModel =  viewModel(
+                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        return ExerciseViewModel(exerciseDao) as T
+                    }
+                }
+            )
+            val parentEntry = remember(it) {
+                navController.getBackStackEntry("create_routine_screen")
+            }
+
+            val sharedRoutineViewModel: CreateRoutineViewModel = viewModel(
+                viewModelStoreOwner = parentEntry, // <-- THIS IS THE MAGIC KEY
+                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        return CreateRoutineViewModel(routineDao) as T
+                    }
+                }
+            )
+            LaunchedEffect(Unit) {
+                exerciseViewModel.clearSelection()
+            }
+            ExercisesScreen(
+                onConfirmSelection = { exercises ->
+                    exercises.forEach { exercise ->  sharedRoutineViewModel.addExerciseToSession(exercise.id, exercise.name, globalUnit) }
+                    navController.popBackStack()
+                },
+                onCreateCustomExercise = { navController.navigate("create_custom_exercise") },
+                onBack = { navController.popBackStack() },
+                viewModel = exerciseViewModel
+            )
+        }
         composable("create_custom_exercise") {
             class CreateCustomExerciseViewModelFactory(
                 private val exerciseDao: ExerciseDao
@@ -293,20 +336,10 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
                 exerciseViewModel.clearSelection()
             }
             ExercisesScreen(
-                onAddToWorkout = { exercises ->
-                    exercises.forEach { exercise ->
-                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
-                    }
+                onConfirmSelection = { exercises ->
+                    exercises.forEach { exercise ->  sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, globalUnit) }
                     navController.popBackStack()
                 },
-                onCreateWorkout = { exercises ->
-                    sharedActiveWorkoutViewModel.startNewEmptyWorkout()
-                    exercises.forEach { exercise ->
-                        sharedActiveWorkoutViewModel.addExerciseToSession(exercise.id, exercise.name, defaultUnit = globalUnit)
-                    }
-                    navController.popBackStack()
-                },
-                isWorkoutActive = isWorkoutActive,
                 onCreateCustomExercise = { navController.navigate("create_custom_exercise") },
                 onBack = { navController.popBackStack() },
                 viewModel = exerciseViewModel

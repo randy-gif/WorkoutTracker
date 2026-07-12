@@ -22,9 +22,17 @@ class CreateRoutineViewModel( private val routineDao: RoutineDao) : ViewModel() 
 
     private val _routineExercises = MutableStateFlow<List<ExerciseInSession>>(emptyList())
     val routineExercises: StateFlow<List<ExerciseInSession>> = _routineExercises.asStateFlow()
+    
+    private val _routineName = MutableStateFlow("")
+    val routineName: StateFlow<String> = _routineName.asStateFlow()
+
+    fun updateRoutineName(name: String) {
+        _routineName.value = name
+    }
 
     fun discardRoutine() {
         _routineExercises.value = emptyList()
+        _routineName.value = ""
     }
 
     fun addExerciseToSession(
@@ -217,6 +225,7 @@ class CreateRoutineViewModel( private val routineDao: RoutineDao) : ViewModel() 
             routineDao.saveFullRoutine(routineEntity, exerciseEntities, setEntities)
 
             _routineExercises.value = emptyList()
+            _routineName.value = ""
             onSuccess()
         }
     }

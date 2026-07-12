@@ -35,6 +35,10 @@ interface RoutineDao {
         insertRoutineSets(sets)
     }
 
+    @Transaction
+    @Query("SELECT * FROM routines ORDER BY name ASC")
+    fun getAllFullRoutines(): Flow<List<FullRoutine>>
+
     // 2. Get just the titles/IDs for a list screen (like a routines tab)
     @Query("SELECT * FROM routines ORDER BY name ASC")
     fun getAllRoutines(): Flow<List<RoutineEntity>>

@@ -12,15 +12,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.lazy.items
+import com.rvilleda.workouttracker.data.database.routine.FullRoutine
+import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 
 @Composable
 fun RoutinesTab(
     onCreateRoutineClick: () -> Unit,
-    // Future parameters you will need:
-    // routines: List<RoutineEntity>,
+    viewModel: HomeViewModel
     // onStartRoutine: (routineId: String) -> Unit,
     // onEditRoutine: (routineId: String) -> Unit
 ) {
+    val routines by viewModel.savedRoutines.collectAsState()
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
@@ -31,38 +35,26 @@ fun RoutinesTab(
         ) {
 
             // --- SECTION: MY ROUTINES ---
-            item {
-                Text(
-                    text = "My Routines",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+            if(routines.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "My Routines",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
-            // TODO: Replace these hardcoded items with a real list -> items(routines) { routine -> ... }
-            item {
+            items(routines, key = { routine -> routine.routine.id }){ routine ->
+                val exerciseNames = routine.exercises
+                    .joinToString(separator = ", ") { it.exercise.exerciseName      }
                 RoutineCard(
-                    title = "Push Day",
-                    subtitle = "Chest, Shoulders, Triceps",
+                    title = routine.routine.name,
+                    subtitle = exerciseNames,
                     onStartClick = { /* TODO */ },
-                    onEditClick = { /* TODO */ }
-                )
-            }
-            item {
-                RoutineCard(
-                    title = "Pull Day",
-                    subtitle = "Back, Biceps, Rear Delts",
-                    onStartClick = { /* TODO */ },
-                    onEditClick = { /* TODO */ }
-                )
-            }
-            item {
-                RoutineCard(
-                    title = "Leg Day",
-                    subtitle = "Quads, Hamstrings, Glutes, Calves",
-                    onStartClick = { /* TODO */ },
-                    onEditClick = { /* TODO */ }
+                    onEditClick = { /* TODO */ },
+                    onDeleteClick = {viewModel.deleteRoutine(routine.routine.id)}
                 )
             }
 
@@ -71,7 +63,7 @@ fun RoutinesTab(
             // --- SECTION: BUILT-IN TEMPLATES (Future Feature) ---
             item {
                 Text(
-                    text = "Example Templates",
+                    text = "Suggested Routine",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -90,6 +82,7 @@ fun RoutinesTab(
                     subtitle = "3 Days / Week • Focus on compound movements",
                     onStartClick = { /* TODO */ },
                     onEditClick = { /* TODO */ },
+                    onDeleteClick = {},
                     isTemplate = true
                 )
             }
@@ -115,6 +108,7 @@ fun RoutineCard(
     subtitle: String,
     onStartClick: () -> Unit,
     onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     isTemplate: Boolean = false
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -179,12 +173,14 @@ fun RoutineCard(
                             DropdownMenuItem(
                                 text = { Text("Share Routine") },
                                 onClick = {
+                                    /* TODO */
                                     menuExpanded = false
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
                                 onClick = {
+                                    onDeleteClick()
                                     menuExpanded = false
                                 }
                             )

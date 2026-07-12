@@ -39,6 +39,8 @@ fun HomeScreen(
 ) {
 
     val workouts by viewModel.savedWorkouts.collectAsState()
+
+
     val topBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topBarState)
 
@@ -95,7 +97,7 @@ fun HomeScreen(
             ) { page ->
                 when(HomeTopTabs.entries[page]) {
                     HomeTopTabs.DASHBOARD -> DashboardTab()
-                    HomeTopTabs.ROUTINES -> RoutinesTab(onCreateRoutineClick)
+                    HomeTopTabs.ROUTINES -> RoutinesTab(onCreateRoutineClick, viewModel)
                     HomeTopTabs.PROGRESS -> ProgressTab()
                     HomeTopTabs.AI_COACH -> AICoach()
                 }
