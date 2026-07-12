@@ -60,7 +60,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
     val navController = rememberNavController()
 
     val sharedActiveWorkoutViewModel: ActiveWorkoutViewModel = viewModel(
-        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+        factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 return ActiveWorkoutViewModel(workoutDao) as T
             }
@@ -116,7 +116,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
                         when (currentDestination) {
                             AppDestinations.HOME -> {
                                 val homeViewModel: HomeViewModel = viewModel(
-                                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                                    factory = object : ViewModelProvider.Factory {
                                         override fun <T : ViewModel> create(modelClass: Class<T>): T {
                                             // Pass BOTH DAOs now
                                             return HomeViewModel(workoutDao, routineDao) as T
@@ -135,7 +135,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
 
                             AppDestinations.EXERCISES -> {
                                 val exerciseViewModel : ExerciseViewModel =  viewModel(
-                                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                                    factory = object : ViewModelProvider.Factory {
                                         override fun <T : ViewModel> create(modelClass: Class<T>): T {
                                             return ExerciseViewModel(exerciseDao) as T
                                         }
@@ -253,7 +253,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
         }
         composable(route = "create_routine_screen") {
             val viewModel: CreateRoutineViewModel = viewModel(
-                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                factory = object : ViewModelProvider.Factory {
                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
                         return CreateRoutineViewModel(routineDao) as T
                     }

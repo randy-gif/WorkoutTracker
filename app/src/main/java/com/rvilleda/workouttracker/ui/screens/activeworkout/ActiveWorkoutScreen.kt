@@ -36,6 +36,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -371,84 +374,143 @@ fun ActiveExerciseCard(
     ) {
         Column(modifier = Modifier.padding(vertical = 16.dp)) {
             // The Header Row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 8.dp else 2.dp),
+                shape = RoundedCornerShape(16.dp) // Softer, more modern corners
             ) {
-                Text(
-                    text = exercise.exerciseName,
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.weight(1f)
-                )
-
-                IconButton(
-                    onClick = { /* Drag handled by modifier */ },
-                    modifier = dragModifier // Attach the drag listener right here
-                ) {
-                    Icon(Icons.Default.Menu, contentDescription = "Drag to reorder")
-                }
-                Box {
-                    IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Exercise Options")
-                    }
-
-                    DropdownMenu(
-                        expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false }
+                Column(modifier = Modifier.padding(vertical = 16.dp)) {
+                    // --- HEADER ROW ---
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val minutes = exercise.restTimeSeconds / 60
-                        val seconds = exercise.restTimeSeconds % 60
-                        val displayTime = String.format("%dmin %02dsec", minutes, seconds)
-                        // Option 1: Toggle Auto Rest
-                        DropdownMenuItem(
-                            text = {
-                                Text(if (exercise.autoRestEnabled) "Disable Auto-Rest" else "Enable Auto-Rest")
-                            },
-                            onClick = {
-                                onToggleAutoRest()
-                                menuExpanded = false
-                            }
+                        Text(
+                            text = exercise.exerciseName,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary, // Makes the exercise name pop
+                            modifier = Modifier.weight(1f)
                         )
 
-                        // Option 2: Adjust Time
-                        DropdownMenuItem(
-                            text = { Text("Adjust Rest Time (${displayTime})") },
-                            onClick = {
-                                menuExpanded = false
-                                showRestDialog = true
-                            }
-                        )
+                        IconButton(
+                            onClick = { /* Drag handled by modifier */ },
+                            modifier = dragModifier
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Drag to reorder",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
 
-                        DropdownMenuItem(
-                            text = { Text(exercise.sets[0].weightUnit.displayName) },
-                            onClick = {
-                                onToggleExerciseUnit()
-                                menuExpanded = false
-                            }
-                        )
-
-                        // Option 3: Delete
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    "Delete Exercise",
-                                    color = MaterialTheme.colorScheme.error
+                        Box {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "Exercise Options",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                            },
-                            onClick = {
-                                onDeleteExercise()
-                                menuExpanded = false
                             }
-                        )
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false }
+                            ) {
+                                val minutes = exercise.restTimeSeconds / 60
+                                val seconds = exercise.restTimeSeconds % 60
+                                val displayTime = String.format("%dmin %02dsec", minutes, seconds)
+                                // Option 1: Toggle Auto Rest
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(if (exercise.autoRestEnabled) "Disable Auto-Rest" else "Enable Auto-Rest")
+                                    },
+                                    onClick = {
+                                        onToggleAutoRest()
+                                        menuExpanded = false
+                                    }
+                                )
+
+                                // Option 2: Adjust Time
+                                DropdownMenuItem(
+                                    text = { Text("Adjust Rest Time (${displayTime})") },
+                                    onClick = {
+                                        menuExpanded = false
+                                        showRestDialog = true
+                                    }
+                                )
+
+                                DropdownMenuItem(
+                                    text = { Text(exercise.sets[0].weightUnit.displayName) },
+                                    onClick = {
+                                        onToggleExerciseUnit()
+                                        menuExpanded = false
+                                    }
+                                )
+
+                                // Option 3: Delete
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            "Delete Exercise",
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    },
+                                    onClick = {
+                                        onDeleteExercise()
+                                        menuExpanded = false
+                                    }
+                                )
+                            }
+                        }
+
                     }
+
                 }
+
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Set",
+                    modifier = Modifier.width(24.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // Dynamically grab the unit from the first set, default to "LBS"
+                val unitLabel = exercise.sets.firstOrNull()?.weightUnit?.displayName ?: "LBS"
+                Text(
+                    text = unitLabel,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = "Reps",
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // Empty spacer to align with the Check & Delete buttons
+                Spacer(modifier = Modifier.width(72.dp))
+            }
+
+            // --- SET ROWS ---
             exercise.sets.forEachIndexed { index, set ->
                 SetInputRow(
                     setNumber = index + 1,
@@ -481,13 +543,14 @@ fun SetInputRow(
     onDelete: () -> Unit,
     onToggleComplete: () -> Unit
 ) {
-    val rowColor = if (set.isCompleted) Color.Green.copy(alpha = 0.15f) else Color.Transparent
+    // Uses Material 3 thematic colors instead of harsh raw colors
+    val rowColor = if (set.isCompleted) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else Color.Transparent
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(rowColor) // Colors the entire width of the card edge-to-edge!
-            .padding(vertical = 4.dp, horizontal = 16.dp), // Pushes the contents inward to align with the header
+            .background(rowColor)
+            .padding(vertical = 4.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -495,44 +558,67 @@ fun SetInputRow(
         Text(
             text = "$setNumber",
             modifier = Modifier.width(24.dp),
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Weight Text Field
+        // Weight Input (Pill Style)
         OutlinedTextField(
             value = set.weight,
             onValueChange = onWeightChange,
-            label = { Text(set.weightUnit.displayName) },
+            placeholder = { Text("0", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
+            shape = RoundedCornerShape(8.dp),
+            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
             modifier = Modifier.weight(1f)
         )
 
-        // Reps Text Field
+        // Reps Input (Pill Style)
         OutlinedTextField(
             value = set.reps,
             onValueChange = onRepsChange,
-            label = { Text("Reps") },
+            placeholder = { Text("0", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
+            shape = RoundedCornerShape(8.dp),
+            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
             modifier = Modifier.weight(1f)
         )
 
-        // Checkmark Button
-        IconButton(onClick = onToggleComplete) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "Complete Set",
-                tint = if (set.isCompleted) Color.Green else Color.Gray
-            )
+        // Checkmark Button (Filled when completed)
+        IconButton(
+            onClick = onToggleComplete,
+            modifier = Modifier.size(32.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        color = if (set.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(8.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Complete Set",
+                    tint = if (set.isCompleted) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
 
-        // Delete Button
-        IconButton(onClick = onDelete) {
+        // Delete Button (Slightly smaller and faded to reduce visual weight)
+        IconButton(
+            onClick = onDelete,
+            modifier = Modifier.size(32.dp)
+        ) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Delete Set",
-                tint = MaterialTheme.colorScheme.error
+                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                modifier = Modifier.size(20.dp)
             )
         }
     }

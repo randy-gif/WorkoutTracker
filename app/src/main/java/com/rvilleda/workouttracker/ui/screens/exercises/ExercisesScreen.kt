@@ -20,6 +20,7 @@ import com.rvilleda.workouttracker.ui.components.ExerciseCard
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.filled.Add
 import com.rvilleda.workouttracker.model.MuscleGroup
 import kotlinx.coroutines.launch
 
@@ -102,20 +103,7 @@ fun ExercisesScreen(
                 }
             }
         },
-        bottomBar = {
-            if (selectedExercises.isNotEmpty() && selectionMode) {
-                Button(
-                    onClick = {
-                        onConfirmSelection(selectedExercises)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RectangleShape,
-                    contentPadding = PaddingValues(vertical = 16.dp)
-                ) {
-                    Text("Add ${selectedExercises.size} Exercises to Workout")
-                }
-            }
-        }
+
     ) { padding ->
         if (searchQuery.isNotEmpty() && searchFilteredExercises != null) {
             Box(modifier = Modifier.padding(padding).fillMaxSize()) {
@@ -130,7 +118,6 @@ fun ExercisesScreen(
                 )
             }
         } else {
-            // 4. If NOT searching, use the Pager and filter dynamically per page
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -145,6 +132,20 @@ fun ExercisesScreen(
                     onToggleSelectionMode = viewModel::toggleSelectionMode,
                     onCreateCustomExercise = onCreateCustomExercise,
                     onConfirmSelection = onConfirmSelection
+                )
+            }
+        }
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+            if (selectedExercises.isNotEmpty() && selectionMode) {
+                ExtendedFloatingActionButton(
+                    onClick = {onConfirmSelection(selectedExercises)},
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp),
+                    icon = { Icon(Icons.Filled.Add, contentDescription = "Add Exercises") },
+                    text = { Text("Add ${selectedExercises.size} Exercises to Workout") },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
