@@ -1,6 +1,7 @@
 package com.rvilleda.workouttracker.ui.screens.exercises
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.rvilleda.workouttracker.data.database.dao.ExerciseDao
 import com.rvilleda.workouttracker.data.repository.ExerciseRepository
 import com.rvilleda.workouttracker.model.Exercise
@@ -8,6 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 
 class ExerciseViewModel(private val exerciseDao: ExerciseDao) : ViewModel() {
 
@@ -16,7 +19,13 @@ class ExerciseViewModel(private val exerciseDao: ExerciseDao) : ViewModel() {
     val selectedExercises: StateFlow<Set<Exercise>> = _selectedExercises.asStateFlow()
     val selectionMode: StateFlow<Boolean> = _selectionMode.asStateFlow()
 
-    val exercises: Flow<List<Exercise>> = ExerciseRepository(exerciseDao).getAllExercises()
+    val exercises: StateFlow<List<Exercise>?> = ExerciseRepository(exerciseDao)
+        .getAllExercises()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
 
     // 2. Accept the whole object as a parameter
     fun toggleSelection(exercise: Exercise) {

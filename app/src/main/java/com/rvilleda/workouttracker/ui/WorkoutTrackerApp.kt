@@ -52,6 +52,7 @@ import com.rvilleda.workouttracker.ui.screens.settings.SettingsScreen
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsScreen
 import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsViewModel
 import com.rvilleda.workouttracker.ui.screens.settings.SettingsViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineDao: RoutineDao) {
@@ -66,6 +67,17 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
         }
     )
     val isWorkoutActive by sharedActiveWorkoutViewModel.isWorkoutActive.collectAsState()
+
+    var showBanner by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isWorkoutActive) {
+        if (isWorkoutActive) {
+            delay(400L)
+            showBanner = true
+        } else {
+            showBanner = false
+        }
+    }
 
     val settingsViewModel: SettingsViewModel = viewModel()
     val globalUnit by settingsViewModel.globalWeightUnit.collectAsState()
@@ -185,7 +197,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
                         }
                     }
 
-                    if (isWorkoutActive) {
+                    if (showBanner) {
                         ActiveWorkoutBanner(
                             timerText = timerText,
                             onClick = { navController.navigate("active_workout_screen") }
@@ -199,26 +211,19 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
             route = "active_workout_screen",
             enterTransition = {
                 slideInVertically(
-                    // Start 100% off-screen at the very bottom
                     initialOffsetY = { fullHeight -> fullHeight },
-                    // LinearOutSlowIn gives it that premium "starts fast, settles gently" Apple-like feel
                     animationSpec = tween(durationMillis = 400, easing = LinearOutSlowInEasing)
                 ) + fadeIn(animationSpec = tween(durationMillis = 400))
             },
             popExitTransition = {
                 slideOutVertically(
-                    // Slide 100% off-screen back to the bottom
                     targetOffsetY = { fullHeight -> fullHeight },
-                    // FastOutLinearIn makes it accelerate as it drops away
                     animationSpec = tween(durationMillis = 350, easing = FastOutLinearInEasing)
                 ) + fadeOut(animationSpec = tween(durationMillis = 350))
             },
-            // NEW: What happens to THIS screen when the user clicks "Add Exercise"?
             exitTransition = {
-                // Keeps the workout screen perfectly still in the background while the selector slides over it
                 fadeOut(animationSpec = tween(durationMillis = 300))
             },
-            // NEW: What happens when they come BACK from the "Add Exercise" screen?
             popEnterTransition = {
                 fadeIn(animationSpec = tween(durationMillis = 300))
             }

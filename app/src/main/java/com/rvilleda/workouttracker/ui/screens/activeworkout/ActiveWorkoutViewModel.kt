@@ -97,18 +97,31 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         startTime = System.currentTimeMillis()
     }
     fun finishAndClearWorkout(workoutName: String, onSuccess: () -> Unit) {
-        onSuccess()
         saveWorkout(workoutName)
+        onSuccess()
+
         _isWorkoutActive.value = false
-        _activeExercises.value = emptyList()
         restTimerJob?.cancel()
+
+        viewModelScope.launch {
+            delay(400L)
+            _activeExercises.value = emptyList()
+            _elapsedTime.value = "00:00"
+            startTime = 0L
+        }
     }
 
     fun discardWorkout(onSuccess: () -> Unit) {
         onSuccess()
         _isWorkoutActive.value = false
-        _activeExercises.value = emptyList()
         restTimerJob?.cancel()
+
+        viewModelScope.launch {
+            delay(400L)
+            _activeExercises.value = emptyList()
+            _elapsedTime.value = "00:00"
+            startTime = 0L
+        }
     }
 
     fun addExerciseToSession(

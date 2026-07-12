@@ -41,11 +41,17 @@ fun ExercisesScreen(
 
     val selectedExercises by viewModel.selectedExercises.collectAsState()
     val selectionMode by viewModel.selectionMode.collectAsState()
-    val allDbExercises by viewModel.exercises.collectAsState(emptyList())
+    val allDbExercises by viewModel.exercises.collectAsState()
+
+    val categorizedExercisesList: List<List<Exercise>?> = remember(allDbExercises) {
+        MuscleGroup.entries.map { group ->
+            allDbExercises?.filter { exercise -> exercise.primaryMuscle.group == group }
+        }
+    }
 
     val searchFilteredExercises = remember(searchQuery, allDbExercises) {
         if (searchQuery.isNotEmpty()) {
-            allDbExercises.filter { exercise ->
+            allDbExercises?.filter { exercise ->
                 exercise.name.contains(searchQuery, ignoreCase = true) ||
                         exercise.primaryMuscle.displayName.contains(searchQuery, ignoreCase = true) ||
                         exercise.secondaryMuscles.any { it.displayName.contains(searchQuery, ignoreCase = true) } ||
@@ -111,7 +117,7 @@ fun ExercisesScreen(
             }
         }
     ) { padding ->
-        if (searchQuery.isNotEmpty()) {
+        if (searchQuery.isNotEmpty() && searchFilteredExercises != null) {
             Box(modifier = Modifier.padding(padding).fillMaxSize()) {
                 ExerciseList(
                     exercises = searchFilteredExercises,
@@ -131,22 +137,8 @@ fun ExercisesScreen(
                     .padding(padding)
                     .fillMaxSize()
             ) { page ->
-                val pageSpecificExercises = remember(allDbExercises, page) {
-                    when (page) {
-                        0 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.CHEST}
-                        1 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.BACK}
-                        2 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.ARMS}
-                        3 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.LEGS}
-                        4 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.SHOULDERS}
-                        5 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.CORE}
-                        6 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.CARDIO}
-                        7 -> allDbExercises.filter { it.primaryMuscle.group == MuscleGroup.FULL_BODY}
-                        else -> emptyList()
-                    }
-                }
-
                 ExerciseList(
-                    exercises = pageSpecificExercises,
+                    exercises = categorizedExercisesList[page],
                     selectedExercises = selectedExercises,
                     selectionMode = selectionMode,
                     onToggleSelection = viewModel::toggleSelection,
@@ -160,7 +152,7 @@ fun ExercisesScreen(
 }
 @Composable
 fun ExerciseList(
-    exercises: List<Exercise>,
+    exercises: List<Exercise>?,
     selectedExercises: Set<Exercise>,
     selectionMode: Boolean,
     onToggleSelection: (Exercise) -> Unit,
@@ -173,7 +165,17 @@ fun ExerciseList(
         contentPadding = PaddingValues(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (exercises.isEmpty()) {
+        if (exercises == null) {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        } else if(exercises.isEmpty()) {
             item {
                 Column(
                     modifier = Modifier.fillMaxSize(),
