@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     viewModel: HomeViewModel,
     onPastWorkoutClick: (String) -> Unit,
+    onCreateRoutineClick: () -> Unit
 ) {
 
     val workouts by viewModel.savedWorkouts.collectAsState()
@@ -94,7 +95,7 @@ fun HomeScreen(
             ) { page ->
                 when(HomeTopTabs.entries[page]) {
                     HomeTopTabs.DASHBOARD -> DashboardTab()
-                    HomeTopTabs.ROUTINES -> RoutinesTab()
+                    HomeTopTabs.ROUTINES -> RoutinesTab(onCreateRoutineClick)
                     HomeTopTabs.PROGRESS -> ProgressTab()
                     HomeTopTabs.AI_COACH -> AICoach()
                 }

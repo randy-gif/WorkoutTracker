@@ -41,8 +41,11 @@ import com.rvilleda.workouttracker.ui.screens.home.HomeScreen
 import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 import com.rvilleda.workouttracker.R
 import com.rvilleda.workouttracker.data.database.dao.ExerciseDao
+import com.rvilleda.workouttracker.data.database.dao.RoutineDao
 import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.ui.components.ActiveWorkoutBanner
+import com.rvilleda.workouttracker.ui.screens.createroutine.CreateRoutineScreen
+import com.rvilleda.workouttracker.ui.screens.createroutine.CreateRoutineViewModel
 import com.rvilleda.workouttracker.ui.screens.exercises.CreateCustomExerciseViewModel
 import com.rvilleda.workouttracker.ui.screens.exercises.ExerciseViewModel
 import com.rvilleda.workouttracker.ui.screens.history.HistoryScreen
@@ -54,7 +57,7 @@ import com.rvilleda.workouttracker.ui.screens.settings.SettingsViewModel
 
 
 @Composable
-fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao) {
+fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineDao: RoutineDao) {
 
     val navController = rememberNavController()
 
@@ -99,10 +102,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao) {
                     }
                 }
             ) {
-                // 3. Wrap everything inside the scaffold in a Column
                 Column(modifier = Modifier.fillMaxSize()) {
-
-                    // 4. The Box takes up all available weight, pushing the banner to the bottom
                     Box(modifier = Modifier.weight(1f)) {
                         when (currentDestination) {
                             AppDestinations.HOME -> {
@@ -116,6 +116,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao) {
 
                                 HomeScreen(
                                     viewModel = homeViewModel,
+                                    onCreateRoutineClick = { navController.navigate("create_routine_screen")},
                                     onPastWorkoutClick = { workoutId ->
                                         navController.navigate("workout_details_screen/$workoutId")
                                     }
@@ -193,6 +194,31 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao) {
                     }
                 }
             }
+        }
+        composable(
+            route = "create_routine_screen",
+        ) {
+            val viewModel: CreateRoutineViewModel = viewModel(
+                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        return CreateRoutineViewModel(routineDao) as T
+                    }
+                }
+            )
+            CreateRoutineScreen(
+                globalUnit = globalUnit,
+                onNavigateToExerciseSelection = { navController.navigate("add_exercise_to_workout") },
+                onSaveRoutine = { routineName ->
+                    viewModel.saveRoutine(routineName) {
+                        navController.popBackStack()
+                    }
+                },
+                onDiscard = { viewModel.discardRoutine() },
+                onBack = { navController.popBackStack() },
+                viewModel
+            )
+
+
         }
         composable(
             route = "active_workout_screen",

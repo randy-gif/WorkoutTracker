@@ -6,11 +6,15 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.rvilleda.workouttracker.data.database.dao.ExerciseDao
+import com.rvilleda.workouttracker.data.database.dao.RoutineDao
 import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
 import com.rvilleda.workouttracker.data.database.entity.workout.CompletedWorkoutEntity
 import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutExerciseEntity
 import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutSetEntity
 import com.rvilleda.workouttracker.data.database.entity.exercise.CustomExerciseEntity
+import com.rvilleda.workouttracker.data.database.routine.RoutineEntity
+import com.rvilleda.workouttracker.data.database.routine.RoutineExerciseEntity
+import com.rvilleda.workouttracker.data.database.routine.RoutineSetEntity
 
 
 @Database(
@@ -19,8 +23,11 @@ import com.rvilleda.workouttracker.data.database.entity.exercise.CustomExerciseE
         WorkoutExerciseEntity::class,
         WorkoutSetEntity::class,
         CustomExerciseEntity::class,
+        RoutineEntity::class,
+        RoutineExerciseEntity::class,
+        RoutineSetEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -28,6 +35,7 @@ abstract class WorkoutDatabase : RoomDatabase() {
 
     abstract fun workoutDao(): WorkoutDao
     abstract fun exerciseDao(): ExerciseDao
+    abstract fun routineDao(): RoutineDao
 
     companion object {
         @Volatile

@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
         // Grab both DAOs
         val workoutDao = db.workoutDao()
         val exerciseDao = db.exerciseDao()
+        val routineDao = db.routineDao()
 
         enableEdgeToEdge()
 
@@ -50,7 +51,8 @@ class MainActivity : ComponentActivity() {
                     // 3. FIX: Pass both DAOs into the App
                     WorkoutTrackerApp(
                         workoutDao = workoutDao,
-                        exerciseDao = exerciseDao
+                        exerciseDao = exerciseDao,
+                        routineDao = routineDao
                     )
                 }
             }
