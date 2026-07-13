@@ -120,7 +120,6 @@ fun ActiveWorkoutScreen(
                 TextButton(
                     onClick = {
                         showSaveDialog = false
-                        // 3. Fallback to "Workout" if they left it completely blank
                         val finalName = if (workoutNameInput.isNotBlank()) workoutNameInput.trim() else "Workout"
                         onFinishWorkout(finalName)
                     }

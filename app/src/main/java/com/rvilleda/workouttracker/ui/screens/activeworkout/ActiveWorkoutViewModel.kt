@@ -3,6 +3,7 @@ package com.rvilleda.workouttracker.ui.screens.activeworkout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.rvilleda.workouttracker.data.database.dao.RoutineDao
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import com.rvilleda.workouttracker.model.ExerciseSet
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +22,7 @@ import kotlinx.coroutines.Job
 import kotlin.math.roundToInt
 
 
-class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
+class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val routineDao: RoutineDao) : ViewModel() {
 
     private val _activeExercises = MutableStateFlow<List<ExerciseInSession>>(emptyList())
     val activeExercises: StateFlow<List<ExerciseInSession>> = _activeExercises.asStateFlow()
@@ -96,6 +97,30 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _isWorkoutActive.value = true
         startTime = System.currentTimeMillis()
     }
+
+    fun startWorkoutFromRoutine(routineId: String) {
+        viewModelScope.launch {
+
+            val fullRoutine = routineDao.getFullRoutineById(routineId)
+
+            if (fullRoutine != null) {
+                _activeExercises.value = fullRoutine.exercises.map { routineExercise ->
+                    ExerciseInSession(
+                        exerciseName = routineExercise.exercise.exerciseName,
+                        baseExerciseId = routineExercise.exercise.baseExerciseId,
+                        sets = routineExercise.sets.map { routineSet ->
+                            ExerciseSet(
+                                weight = routineSet.targetWeight.toString(),
+                                reps = routineSet.targetReps.toString(),
+                            )
+                        }
+                    )
+                }
+                startTime = System.currentTimeMillis()
+                _isWorkoutActive.value = true
+            }
+        }
+    }
     fun finishAndClearWorkout(workoutName: String, onSuccess: () -> Unit) {
         saveWorkout(workoutName)
         onSuccess()
@@ -112,16 +137,13 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     }
 
     fun discardWorkout(onSuccess: () -> Unit) {
-        onSuccess()
+
         _isWorkoutActive.value = false
         restTimerJob?.cancel()
+        _activeExercises.value = emptyList()
+        _elapsedTime.value = "00:00"
 
-        viewModelScope.launch {
-            delay(400L)
-            _activeExercises.value = emptyList()
-            _elapsedTime.value = "00:00"
-            startTime = 0L
-        }
+        onSuccess()
     }
 
     fun addExerciseToSession(

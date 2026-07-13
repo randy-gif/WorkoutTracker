@@ -1,6 +1,7 @@
 package com.rvilleda.workouttracker.ui
 
 import CreateCustomExerciseScreen
+import android.R
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -13,8 +14,12 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +59,7 @@ import com.rvilleda.workouttracker.ui.screens.workoutdetails.WorkoutDetailsViewM
 import com.rvilleda.workouttracker.ui.screens.settings.SettingsViewModel
 import kotlinx.coroutines.delay
 
+
 @Composable
 fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineDao: RoutineDao) {
 
@@ -62,7 +68,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
     val sharedActiveWorkoutViewModel: ActiveWorkoutViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return ActiveWorkoutViewModel(workoutDao) as T
+                return ActiveWorkoutViewModel(workoutDao, routineDao) as T
             }
         }
     )
@@ -81,6 +87,37 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
 
     val settingsViewModel: SettingsViewModel = viewModel()
     val globalUnit by settingsViewModel.globalWeightUnit.collectAsState()
+
+    var pendingRoutineId by remember { mutableStateOf<String?>(null) }
+
+    if (pendingRoutineId != null) {
+        AlertDialog(
+            onDismissRequest = { pendingRoutineId = null },
+            title = { Text("Discard Current Workout?") },
+            text = { Text("You already have an active workout running. To start this routine, you must finish or discard your current workout first. Do you want to discard your current workout?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        sharedActiveWorkoutViewModel.discardWorkout {
+                            sharedActiveWorkoutViewModel.startWorkoutFromRoutine(pendingRoutineId!!)
+                            navController.navigate("active_workout_screen")
+
+                            pendingRoutineId = null
+                        }
+                    }
+                ) {
+                    Text("Discard", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { pendingRoutineId = null }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     NavHost(
         navController = navController,
@@ -127,8 +164,16 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
                                 HomeScreen(
                                     viewModel = homeViewModel,
                                     onCreateRoutineClick = { navController.navigate("create_routine_screen")},
-                                    onPastWorkoutClick = { workoutId ->
-                                        navController.navigate("workout_details_screen/$workoutId")
+                                    onStartRoutineClick = { routineId ->
+                                        if (!isWorkoutActive) {
+                                            sharedActiveWorkoutViewModel.startWorkoutFromRoutine(routineId)
+                                            navController.navigate("active_workout_screen")
+                                        }else{
+                                            pendingRoutineId = routineId
+                                        }
+                                    },
+                                    onEditRoutineClick = { routineId ->
+                                        navController.navigate("edit_routine_screen")
                                     }
                                 )
                             }
@@ -228,7 +273,6 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
                 fadeIn(animationSpec = tween(durationMillis = 300))
             }
         ) {
-
             ActiveWorkoutScreen(
                 globalUnit = globalUnit,
                 viewModel = sharedActiveWorkoutViewModel,
@@ -251,6 +295,7 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
                 }
             )
         }
+
         composable(route = "create_routine_screen") {
             val viewModel: CreateRoutineViewModel = viewModel(
                 factory = object : ViewModelProvider.Factory {

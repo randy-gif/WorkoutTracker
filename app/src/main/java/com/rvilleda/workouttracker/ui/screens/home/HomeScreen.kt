@@ -34,7 +34,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onPastWorkoutClick: (String) -> Unit,
+    onStartRoutineClick: (String) -> Unit,
+    onEditRoutineClick: (String) -> Unit,
     onCreateRoutineClick: () -> Unit
 ) {
 
@@ -97,7 +98,7 @@ fun HomeScreen(
             ) { page ->
                 when(HomeTopTabs.entries[page]) {
                     HomeTopTabs.DASHBOARD -> DashboardTab()
-                    HomeTopTabs.ROUTINES -> RoutinesTab(onCreateRoutineClick, viewModel)
+                    HomeTopTabs.ROUTINES -> RoutinesTab(onCreateRoutineClick, onStartRoutineClick, onEditRoutineClick, viewModel)
                     HomeTopTabs.PROGRESS -> ProgressTab()
                     HomeTopTabs.AI_COACH -> AICoach()
                 }

@@ -31,12 +31,15 @@ class HomeViewModel(private val workoutDao: WorkoutDao, private val routineDao: 
     }
 
     // Routine
+
+
     val savedRoutines: StateFlow<List<FullRoutine>> = routineDao.getAllFullRoutines()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
 
     fun deleteRoutine(routineId: String) {
         viewModelScope.launch {

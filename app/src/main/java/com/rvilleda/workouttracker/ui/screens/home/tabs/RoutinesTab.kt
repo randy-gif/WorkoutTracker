@@ -19,9 +19,9 @@ import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 @Composable
 fun RoutinesTab(
     onCreateRoutineClick: () -> Unit,
+    onStartRoutine: (routineId: String) -> Unit,
+    onEditRoutine: (routineId: String) -> Unit,
     viewModel: HomeViewModel
-    // onStartRoutine: (routineId: String) -> Unit,
-    // onEditRoutine: (routineId: String) -> Unit
 ) {
     val routines by viewModel.savedRoutines.collectAsState()
 
@@ -52,8 +52,8 @@ fun RoutinesTab(
                 RoutineCard(
                     title = routine.routine.name,
                     subtitle = exerciseNames,
-                    onStartClick = { /* TODO */ },
-                    onEditClick = { /* TODO */ },
+                    onStartClick = { onStartRoutine(routine.routine.id) },
+                    onEditClick = { onEditRoutine(routine.routine.id)},
                     onDeleteClick = {viewModel.deleteRoutine(routine.routine.id)}
                 )
             }
