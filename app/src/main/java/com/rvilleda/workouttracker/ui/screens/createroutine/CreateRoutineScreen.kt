@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import com.rvilleda.workouttracker.model.ExerciseSet
@@ -221,10 +222,11 @@ fun RoutineExerciseCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 8.dp else 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 8.dp else 2.dp),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(vertical = 16.dp)) {
-            // Header Row
+            // --- HEADER ROW ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -235,6 +237,8 @@ fun RoutineExerciseCard(
                 Text(
                     text = exercise.exerciseName,
                     style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -242,11 +246,20 @@ fun RoutineExerciseCard(
                     onClick = { },
                     modifier = dragModifier
                 ) {
-                    Icon(Icons.Default.Menu, contentDescription = "Drag to reorder")
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = "Drag to reorder",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
+
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Options")
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Options",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
 
                     DropdownMenu(
@@ -274,7 +287,7 @@ fun RoutineExerciseCard(
                         )
 
                         DropdownMenuItem(
-                            text = { Text(exercise.sets[0].weightUnit.displayName) },
+                            text = { Text(exercise.sets.firstOrNull()?.weightUnit?.displayName ?: "LBS") },
                             onClick = {
                                 onToggleExerciseUnit()
                                 menuExpanded = false
@@ -292,8 +305,45 @@ fun RoutineExerciseCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
+            // --- SETS COLUMN HEADER ---
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Set",
+                    modifier = Modifier.width(24.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                val unitLabel = exercise.sets.firstOrNull()?.weightUnit?.displayName ?: "LBS"
+                Text(
+                    text = unitLabel,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = "Reps",
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // Empty spacer to perfectly align with the Delete button below
+                Spacer(modifier = Modifier.width(32.dp))
+            }
+
+            // --- SET ROWS ---
             exercise.sets.forEachIndexed { index, set ->
                 RoutineSetInputRow(
                     setNumber = index + 1,
@@ -327,9 +377,9 @@ fun RoutineSetInputRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp, horizontal = 16.dp),
+            .padding(vertical = 4.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Set Number
         Text(
@@ -339,21 +389,13 @@ fun RoutineSetInputRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Target Weight Field
+        // Target Weight Field (Pill Style, no trailing icon)
         OutlinedTextField(
             value = set.weight,
             onValueChange = onWeightChange,
             placeholder = {
                 Text("0", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             },
-            trailingIcon = {
-                Text(
-                    text = set.weightUnit.displayName,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(end = 12.dp)
-                )
-            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
             shape = RoundedCornerShape(8.dp),
@@ -361,21 +403,13 @@ fun RoutineSetInputRow(
             modifier = Modifier.weight(1f)
         )
 
-        // Target Reps Field
+        // Target Reps Field (Pill Style, no trailing icon)
         OutlinedTextField(
             value = set.reps,
             onValueChange = onRepsChange,
             placeholder = {
                 Text("0", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             },
-            trailingIcon = {
-                Text(
-                    text = "Reps",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(end = 12.dp)
-                )
-            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
             shape = RoundedCornerShape(8.dp),
@@ -383,15 +417,16 @@ fun RoutineSetInputRow(
             modifier = Modifier.weight(1f)
         )
 
-        // Delete Button
+        // Delete Button (Matches size of active card)
         IconButton(
             onClick = onDelete,
-            modifier = Modifier.size(36.dp) // Slightly smaller touch target to save horizontal space
+            modifier = Modifier.size(32.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Delete Set",
-                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f) // Slightly faded error color
+                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                modifier = Modifier.size(20.dp)
             )
         }
     }
