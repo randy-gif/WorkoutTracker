@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.rvilleda.workouttracker.model.Exercise
 import com.rvilleda.workouttracker.ui.screens.exercises.components.TabRowHeader
 import androidx.compose.ui.graphics.RectangleShape
-import com.rvilleda.workouttracker.model.TargetMuscle
+import com.rvilleda.workouttracker.model.MuscleGroup
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.Alignment
 import com.rvilleda.workouttracker.ui.components.CreateExerciseCard
@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.filled.Add
-import com.rvilleda.workouttracker.model.MuscleGroup
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +36,7 @@ fun ExercisesScreen(
 
     var searchQuery by remember { mutableStateOf("") }
 
-    val pagerState = rememberPagerState(pageCount = { TargetMuscle.entries.size })
+    val pagerState = rememberPagerState(pageCount = { MuscleGroup.entries.size })
     val coroutineScope = rememberCoroutineScope()
 
     val selectedExercises by viewModel.selectedExercises.collectAsState()
