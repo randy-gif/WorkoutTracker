@@ -6,6 +6,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import com.rvilleda.workouttracker.model.WeightUnit
 
 @Entity(tableName = "completed_workouts")
 data class CompletedWorkoutEntity(
@@ -52,6 +53,7 @@ data class WorkoutSetEntity(
     val workoutExerciseId: String,
     val setNumber: Int,
     val weight: Float,
+    val weightUnit: WeightUnit,
     val reps: Int,
     val rpe: Float?,
     val isCompleted: Boolean

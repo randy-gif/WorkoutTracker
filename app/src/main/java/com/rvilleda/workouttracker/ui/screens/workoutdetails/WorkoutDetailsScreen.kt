@@ -15,6 +15,9 @@ import com.rvilleda.workouttracker.data.database.entity.CompletedWorkoutEntity
 import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rvilleda.workouttracker.model.ExerciseSet
 import com.rvilleda.workouttracker.model.WeightUnit
 import com.rvilleda.workouttracker.model.calculateTotalWorkoutVolume
@@ -30,7 +33,14 @@ fun WorkoutDetailsScreen(
     globalUnit: WeightUnit,
     onBack: () -> Unit,
     onWorkoutAgain: (List<ExerciseInSession>) -> Unit,
-    onDeleteWorkout: () -> Unit
+    onDeleteWorkout: () -> Unit,
+    viewModel: WorkoutDetailsViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return WorkoutDetailsViewModel(workoutDao) as T
+            }
+            }
+    )
 ) {
 
 
@@ -38,8 +48,13 @@ fun WorkoutDetailsScreen(
     var workout by remember { mutableStateOf<CompletedWorkoutEntity?>(null) }
     var exercises by remember { mutableStateOf<List<ExerciseInSession>>(emptyList()) }
 
+    val rawVolume by viewModel.totalVolume.collectAsState()
+    val displayVolume = viewModel.formatVolume(rawVolume)
 
-    LaunchedEffect(workoutId) {
+
+    LaunchedEffect(workoutId, globalUnit) {
+        viewModel.loadWorkoutId(workoutId)
+        viewModel.updateUnitPreference(globalUnit)
         val fetchedWorkout = workoutDao.getFullWorkoutById(workoutId)
         if (fetchedWorkout != null) {
             workout = fetchedWorkout.workout
@@ -53,10 +68,10 @@ fun WorkoutDetailsScreen(
                         ExerciseSet(
                             id = setEntity.id,
                             weight = setEntity.weight.toInt().toString(),
+                            weightUnit = setEntity.weightUnit,
                             reps = setEntity.reps.toString(),
                             rpe = setEntity.rpe,
                             isCompleted = setEntity.isCompleted,
-                            weightUnit = globalUnit
                         )
                     }
                 )
@@ -212,7 +227,7 @@ fun WorkoutDetailsScreen(
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
                                 Text(
-                                    text = "${totalVolume.toInt()} ${globalUnit.name}",
+                                    text = "$displayVolume ${globalUnit.name}",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer

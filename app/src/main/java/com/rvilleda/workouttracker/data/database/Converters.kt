@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import com.rvilleda.workouttracker.model.TargetMuscle
+import com.rvilleda.workouttracker.model.WeightUnit
 
 class Converters {
 
@@ -52,4 +53,20 @@ class Converters {
         val type = object : TypeToken<List<ExerciseInSession>>() {}.type
         return gson.fromJson(json, type) ?: emptyList()
     }
+
+    // --- WeightUnit Converters ---
+    @TypeConverter
+    fun fromWeightUnit(value: WeightUnit): String {
+        return value.name
+    }
+
+    @TypeConverter
+    fun toWeightUnit(value: String): WeightUnit {
+        return try {
+            WeightUnit.valueOf(value)
+        } catch (e: IllegalArgumentException) {
+            WeightUnit.LBS // Safe fallback
+        }
+    }
 }
+

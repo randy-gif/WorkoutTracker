@@ -482,6 +482,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                                 workoutExerciseId = workoutExerciseId,
                                 setNumber = setIndex + 1,
                                 weight = set.weight.toFloatOrNull() ?: 0f,
+                                weightUnit = set.weightUnit,
                                 reps = set.reps.toIntOrNull() ?: 0,
                                 rpe = set.rpe,
                                 isCompleted = true

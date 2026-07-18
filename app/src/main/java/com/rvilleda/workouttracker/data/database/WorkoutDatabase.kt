@@ -30,7 +30,7 @@ import com.rvilleda.workouttracker.data.database.entity.ActiveWorkoutEntity
         RoutineSetEntity::class,
         ActiveWorkoutEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

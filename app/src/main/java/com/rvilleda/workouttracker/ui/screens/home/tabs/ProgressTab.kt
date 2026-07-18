@@ -5,21 +5,35 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.rvilleda.workouttracker.model.WeightUnit
+import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 
 @Composable
-fun ProgressTab() {
+fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
+
+    LaunchedEffect(globalUnit) {
+        viewModel.updateUnitPreference(globalUnit)
+    }
+
+    val workoutsCount by viewModel.workoutsThisMonth.collectAsState()
+    val totalVolume by viewModel.volumeThisMonth.collectAsState()
+
+    val formattedVolume = viewModel.formatVolume(totalVolume)
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp) // Generous spacing between sections
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // --- 1. QUICK STATS ROW ---
         item {
             Text(
                 text = "Overview",
@@ -32,23 +46,20 @@ fun ProgressTab() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Hardcoded for now, but these will eventually observe your HomeViewModel
                 StatCard(
                     title = "Workouts",
-                    value = "12",
+                    value = workoutsCount.toString(),
                     subtitle = "This Month",
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
                     title = "Volume",
-                    value = "14.5k",
-                    subtitle = "LBS Lifted",
+                    value = formattedVolume,
+                    subtitle = "$globalUnit Lifted",
                     modifier = Modifier.weight(1f)
                 )
             }
         }
-
-        // --- 2. CONSISTENCY CHART PLACEHOLDER ---
         item {
             Text(
                 text = "Consistency",
@@ -76,7 +87,6 @@ fun ProgressTab() {
             }
         }
 
-        // --- 3. EXERCISE TRENDS PLACEHOLDER ---
         item {
             Text(
                 text = "Exercise Trends",

@@ -56,18 +56,43 @@ interface WorkoutDao {
     @Query("SELECT * FROM completed_workouts WHERE id = :workoutId LIMIT 1")
     suspend fun getFullWorkoutById(workoutId: String): FullWorkout?
 
+    @Query("""
+        SELECT SUM(
+            CASE 
+                WHEN s.weightUnit = 'LBS' AND :targetUnitName = 'KG' THEN (s.weight / 2.20462) * s.reps
+                WHEN s.weightUnit = 'KG' AND :targetUnitName = 'LBS' THEN (s.weight * 2.20462) * s.reps
+                ELSE s.weight * s.reps 
+            END
+        ) 
+        FROM workout_sets s
+        INNER JOIN workout_exercises e ON s.workoutExerciseId = e.id
+        INNER JOIN completed_workouts w ON e.workoutId = w.id
+        -- Target the specific workout ID instead of a date
+        WHERE w.id = :workoutId AND s.isCompleted = 1 
+    """)
+    fun getWorkoutVolumeById(workoutId: String, targetUnitName: String): Flow<Double?>
+
     @Query("DELETE FROM completed_workouts WHERE id = :workoutId")
     suspend fun deleteWorkout(workoutId: String)
 
     @Query("SELECT COUNT(id) FROM completed_workouts WHERE startTime >= :startDateMillis")
     fun getWorkoutsCountSince(startDateMillis: Long): Flow<Int>
 
-    @Query("""
-        SELECT SUM(CAST(s.weight AS REAL) * CAST(s.reps AS INTEGER)) 
+    @Query(
+        """
+        SELECT SUM(
+            CASE 
+                -- s.weightUnit is saved as 'LBS' or 'KG' thanks to your converter!
+                WHEN s.weightUnit = 'LBS' AND :targetUnitName = 'KG' THEN (s.weight / 2.20462) * s.reps
+                WHEN s.weightUnit = 'KG' AND :targetUnitName = 'LBS' THEN (s.weight * 2.20462) * s.reps
+                ELSE s.weight * s.reps 
+            END
+        ) 
         FROM workout_sets s
         INNER JOIN workout_exercises e ON s.workoutExerciseId = e.id
         INNER JOIN completed_workouts w ON e.workoutId = w.id
-        WHERE w.startTime >= :startDateMillis
-    """)
-    fun getTotalVolumeSince(startDateMillis: Long): Flow<Double?>
+        WHERE w.startTime >= :startDateMillis AND s.isCompleted = 1 
+    """
+    )
+    fun getTotalVolumeSince(startDateMillis: Long, targetUnitName: String): Flow<Double?>
 }

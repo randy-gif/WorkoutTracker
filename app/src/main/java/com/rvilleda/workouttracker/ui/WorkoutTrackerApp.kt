@@ -174,7 +174,8 @@ fun WorkoutTrackerApp(workoutDao: WorkoutDao, exerciseDao: ExerciseDao, routineD
                                     },
                                     onEditRoutineClick = { routineId ->
                                         navController.navigate("edit_routine_screen")
-                                    }
+                                    },
+                                    globalUnit = globalUnit
                                 )
                             }
 

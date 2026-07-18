@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import com.rvilleda.workouttracker.R
+import com.rvilleda.workouttracker.model.WeightUnit
 import com.rvilleda.workouttracker.ui.screens.home.components.TabRowHeader
 import com.rvilleda.workouttracker.ui.screens.home.components.HomeTopTabs
 import com.rvilleda.workouttracker.ui.screens.home.tabs.AICoach
@@ -36,7 +37,8 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onStartRoutineClick: (String) -> Unit,
     onEditRoutineClick: (String) -> Unit,
-    onCreateRoutineClick: () -> Unit
+    onCreateRoutineClick: () -> Unit,
+    globalUnit: WeightUnit
 ) {
 
     val workouts by viewModel.savedWorkouts.collectAsState()
@@ -99,7 +101,7 @@ fun HomeScreen(
                 when(HomeTopTabs.entries[page]) {
                     HomeTopTabs.DASHBOARD -> DashboardTab()
                     HomeTopTabs.ROUTINES -> RoutinesTab(onCreateRoutineClick, onStartRoutineClick, onEditRoutineClick, viewModel)
-                    HomeTopTabs.PROGRESS -> ProgressTab()
+                    HomeTopTabs.PROGRESS -> ProgressTab(globalUnit, viewModel)
                     HomeTopTabs.AI_COACH -> AICoach()
                 }
             }
