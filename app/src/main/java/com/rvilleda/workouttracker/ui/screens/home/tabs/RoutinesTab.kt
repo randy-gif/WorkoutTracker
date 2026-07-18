@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.items
-import com.rvilleda.workouttracker.data.database.routine.FullRoutine
 import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 
 @Composable

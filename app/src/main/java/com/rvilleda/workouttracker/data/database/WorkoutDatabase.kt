@@ -11,10 +11,13 @@ import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
 import com.rvilleda.workouttracker.data.database.entity.workout.CompletedWorkoutEntity
 import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutExerciseEntity
 import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutSetEntity
-import com.rvilleda.workouttracker.data.database.entity.exercise.CustomExerciseEntity
-import com.rvilleda.workouttracker.data.database.routine.RoutineEntity
-import com.rvilleda.workouttracker.data.database.routine.RoutineExerciseEntity
-import com.rvilleda.workouttracker.data.database.routine.RoutineSetEntity
+import com.rvilleda.workouttracker.data.database.entity.CustomExerciseEntity
+import com.rvilleda.workouttracker.data.database.entity.RoutineEntity
+import com.rvilleda.workouttracker.data.database.entity.RoutineExerciseEntity
+import com.rvilleda.workouttracker.data.database.entity.RoutineSetEntity
+import com.rvilleda.workouttracker.data.database.Converters
+import com.rvilleda.workouttracker.data.database.entity.ActiveWorkoutEntity
+
 
 
 @Database(
@@ -25,9 +28,10 @@ import com.rvilleda.workouttracker.data.database.routine.RoutineSetEntity
         CustomExerciseEntity::class,
         RoutineEntity::class,
         RoutineExerciseEntity::class,
-        RoutineSetEntity::class
+        RoutineSetEntity::class,
+        ActiveWorkoutEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

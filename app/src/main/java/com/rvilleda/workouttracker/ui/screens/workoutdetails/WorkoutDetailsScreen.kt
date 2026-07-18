@@ -149,7 +149,7 @@ fun WorkoutDetailsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 1. Calculate the data BEFORE the item block
-            val totalMinutes = workout!!.durationMs / (1000 * 60)
+            val totalMinutes = (workout!!.dateCompleted - workout!!.startTime) / (1000 * 60)
             val hours = totalMinutes / 60
             val minutes = totalMinutes % 60
             val durationText = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"

@@ -1,8 +1,9 @@
-package com.rvilleda.workouttracker.data.database.routine
+package com.rvilleda.workouttracker.data.database.entity
 
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 
@@ -23,7 +24,7 @@ data class RoutineEntity(
         )
     ],
     // Indexing the foreign key makes database queries much faster
-    indices = [androidx.room.Index("routineId")]
+    indices = [Index("routineId")]
 )
 data class RoutineExerciseEntity(
     @PrimaryKey val id: String,
@@ -45,7 +46,7 @@ data class RoutineExerciseEntity(
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [androidx.room.Index("routineExerciseId")]
+    indices = [Index("routineExerciseId")]
 )
 data class RoutineSetEntity(
     @PrimaryKey val id: String,

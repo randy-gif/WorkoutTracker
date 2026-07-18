@@ -1,13 +1,18 @@
 package com.rvilleda.workouttracker.data.database
 
 import androidx.room.TypeConverter
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.rvilleda.workouttracker.model.ExerciseInSession
 import com.rvilleda.workouttracker.model.TargetMuscle
 
 class Converters {
 
+    private val gson = Gson()
+
+    // --- String List Converters ---
     @TypeConverter
     fun fromStringList(value: List<String>?): String {
-        // Joins the list with a special separator so commas in instructions don't break it
         return value?.joinToString(separator = "|||") ?: ""
     }
 
@@ -17,6 +22,7 @@ class Converters {
         return value.split("|||")
     }
 
+    // --- Muscle Group Converters ---
     @TypeConverter
     fun fromMuscleGroupList(value: List<TargetMuscle>?): String {
         return value?.joinToString(separator = ",") { it.name } ?: ""
@@ -29,9 +35,21 @@ class Converters {
             try {
                 TargetMuscle.valueOf(it)
             } catch (e: IllegalArgumentException) {
-                null // Ignores any strings that don't match your enums
+                null
             }
         }
     }
 
+    // --- Active Workout Cache Converters ---
+    @TypeConverter
+    fun fromExerciseList(exercises: List<ExerciseInSession>?): String {
+        return gson.toJson(exercises)
+    }
+
+    @TypeConverter
+    fun toExerciseList(json: String?): List<ExerciseInSession> {
+        if (json.isNullOrBlank()) return emptyList()
+        val type = object : TypeToken<List<ExerciseInSession>>() {}.type
+        return gson.fromJson(json, type) ?: emptyList()
+    }
 }

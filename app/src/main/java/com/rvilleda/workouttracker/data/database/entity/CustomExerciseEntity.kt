@@ -1,4 +1,4 @@
-package com.rvilleda.workouttracker.data.database.entity.exercise
+package com.rvilleda.workouttracker.data.database.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -6,8 +6,8 @@ import com.rvilleda.workouttracker.model.Equipment
 import com.rvilleda.workouttracker.model.FatigueTier
 import com.rvilleda.workouttracker.model.Mechanics
 import com.rvilleda.workouttracker.model.MovementPattern
-import com.rvilleda.workouttracker.model.TargetMuscle
 import com.rvilleda.workouttracker.model.ResistanceCurve
+import com.rvilleda.workouttracker.model.TargetMuscle
 import java.util.UUID
 
 @Entity(tableName = "custom_exercises")

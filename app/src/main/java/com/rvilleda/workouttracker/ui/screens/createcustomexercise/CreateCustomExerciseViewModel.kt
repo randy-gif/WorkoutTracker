@@ -2,7 +2,7 @@ package com.rvilleda.workouttracker.ui.screens.exercises
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rvilleda.workouttracker.data.database.entity.exercise.CustomExerciseEntity
+import com.rvilleda.workouttracker.data.database.entity.CustomExerciseEntity
 import com.rvilleda.workouttracker.data.database.dao.ExerciseDao
 import com.rvilleda.workouttracker.model.Equipment
 import com.rvilleda.workouttracker.model.FatigueTier

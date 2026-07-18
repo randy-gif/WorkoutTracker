@@ -81,7 +81,7 @@ fun HistoryScreen(
                         // Build a simple card for each workout
                         WorkoutHistoryCard(
                             workoutName = workout.name,
-                            durationMs = workout.durationMs,
+                            durationMs = workout.dateCompleted - workout.startTime,
                             onClick = {
                                 onNavigateToWorkoutDetails(workout.id)
                             }

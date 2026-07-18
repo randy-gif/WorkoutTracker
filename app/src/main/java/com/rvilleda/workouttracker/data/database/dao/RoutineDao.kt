@@ -5,10 +5,10 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
-import com.rvilleda.workouttracker.data.database.routine.FullRoutine
-import com.rvilleda.workouttracker.data.database.routine.RoutineEntity
-import com.rvilleda.workouttracker.data.database.routine.RoutineExerciseEntity
-import com.rvilleda.workouttracker.data.database.routine.RoutineSetEntity
+import com.rvilleda.workouttracker.data.database.entity.FullRoutine
+import com.rvilleda.workouttracker.data.database.entity.RoutineEntity
+import com.rvilleda.workouttracker.data.database.entity.RoutineExerciseEntity
+import com.rvilleda.workouttracker.data.database.entity.RoutineSetEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

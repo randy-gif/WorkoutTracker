@@ -7,6 +7,6 @@ import androidx.room.PrimaryKey
 data class CompletedWorkoutEntity(
     @PrimaryKey val id: String,
     val name: String,
+    val startTime: Long,
     val dateCompleted: Long,
-    val durationMs: Long,
 )

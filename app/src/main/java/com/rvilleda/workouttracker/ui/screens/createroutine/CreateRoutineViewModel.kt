@@ -3,9 +3,9 @@ package com.rvilleda.workouttracker.ui.screens.createroutine
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rvilleda.workouttracker.data.database.dao.RoutineDao
-import com.rvilleda.workouttracker.data.database.routine.RoutineExerciseEntity
-import com.rvilleda.workouttracker.data.database.routine.RoutineSetEntity
-import com.rvilleda.workouttracker.data.database.routine.RoutineEntity
+import com.rvilleda.workouttracker.data.database.entity.RoutineExerciseEntity
+import com.rvilleda.workouttracker.data.database.entity.RoutineSetEntity
+import com.rvilleda.workouttracker.data.database.entity.RoutineEntity
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import com.rvilleda.workouttracker.model.ExerciseSet
 import com.rvilleda.workouttracker.model.WeightUnit

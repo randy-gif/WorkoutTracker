@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
+import com.rvilleda.workouttracker.data.database.entity.ActiveWorkoutEntity
 import com.rvilleda.workouttracker.data.database.entity.workout.CompletedWorkoutEntity
 import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutExerciseEntity
 import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutSetEntity
@@ -37,8 +38,38 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
     private val _restTimeRemaining = MutableStateFlow(0)
     val restTimeRemaining: StateFlow<Int> = _restTimeRemaining.asStateFlow()
 
+    private var currentRoutineId: String? = null
+
     init {
         startTimer()
+        checkForActiveWorkoutCache()
+    }
+
+    private fun checkForActiveWorkoutCache() {
+        viewModelScope.launch {
+            val cache = workoutDao.getActiveWorkoutCache()
+            if (cache != null) {
+                currentRoutineId = cache.routineId
+                startTime = cache.startTime
+                _activeExercises.value = cache.exercises
+
+                _isWorkoutActive.value = true
+            }
+        }
+    }
+
+    private fun autoSaveCache() {
+        if (!_isWorkoutActive.value) return
+
+        viewModelScope.launch {
+            val cacheEntity = ActiveWorkoutEntity(
+                id = 1,
+                routineId = currentRoutineId,
+                startTime = startTime,
+                exercises = _activeExercises.value
+            )
+            workoutDao.saveActiveWorkoutCache(cacheEntity)
+        }
     }
 
     private fun startTimer() {
@@ -104,6 +135,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
             val fullRoutine = routineDao.getFullRoutineById(routineId)
 
             if (fullRoutine != null) {
+                currentRoutineId = routineId
                 _activeExercises.value = fullRoutine.exercises.map { routineExercise ->
                     ExerciseInSession(
                         exerciseName = routineExercise.exercise.exerciseName,
@@ -118,6 +150,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 }
                 startTime = System.currentTimeMillis()
                 _isWorkoutActive.value = true
+                autoSaveCache()
             }
         }
     }
@@ -127,6 +160,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
 
         _isWorkoutActive.value = false
         restTimerJob?.cancel()
+        _restTimeRemaining.value = 0
 
         viewModelScope.launch {
             delay(400L)
@@ -140,10 +174,14 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
 
         _isWorkoutActive.value = false
         restTimerJob?.cancel()
+        _restTimeRemaining.value = 0
         _activeExercises.value = emptyList()
         _elapsedTime.value = "00:00"
 
         onSuccess()
+        viewModelScope.launch {
+            workoutDao.clearActiveWorkoutCache()
+        }
     }
 
     fun addExerciseToSession(
@@ -162,6 +200,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 )
             )
         }
+        autoSaveCache()
     }
 
     fun addSetToExercise(exerciseId: String, defaultUnit: WeightUnit) {
@@ -178,6 +217,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
             } else exercise
         }
         _activeExercises.value = updatedExercises
+        autoSaveCache()
     }
 
     fun updateSet(workoutExerciseId: String, setId: String, weight: String = "", reps: String = "", isCompleted: Boolean = false, weightUnit: WeightUnit = WeightUnit.LBS) {
@@ -193,6 +233,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 }
             }
         }
+        autoSaveCache()
     }
 
     fun updateSetWeight(workoutExerciseId: String, setId: String, weight: String) {
@@ -208,6 +249,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 }
             }
         }
+        autoSaveCache()
     }
 
     fun updateSetReps(workoutExerciseId: String, setId: String, reps: String) {
@@ -223,6 +265,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 }
             }
         }
+        autoSaveCache()
     }
 
     fun updateSetUnit(workoutExerciseId: String, setId: String, unit: WeightUnit) {
@@ -258,6 +301,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 }
             }
         }
+        autoSaveCache()
     }
 
 
@@ -273,6 +317,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 exercise.sets.isEmpty()
             }
         }
+        autoSaveCache()
     }
 
     fun toggleExerciseUnit(exerciseId: String) {
@@ -308,10 +353,12 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 }
             }
         }
+        autoSaveCache()
     }
 
     fun removeExerciseFromSession(exerciseId: String) {
         _activeExercises.value = _activeExercises.value.filterNot { it.id == exerciseId }
+        autoSaveCache()
     }
 
     fun moveExerciseByKey(fromId: String, toId: String) {
@@ -329,6 +376,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
             }
             mutableList
         }
+        autoSaveCache()
     }
 
     // 4. COMPLETE SET & TRIGGER TIMER
@@ -351,6 +399,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
             } else exercise
         }
         _activeExercises.value = updatedExercises
+        autoSaveCache()
     }
 
     fun toggleAutoRest(exerciseId: String) {
@@ -359,6 +408,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 exercise.copy(autoRestEnabled = !exercise.autoRestEnabled)
             } else exercise
         }
+        autoSaveCache()
     }
 
     fun updateRestTime(exerciseId: String, seconds: Int) {
@@ -367,6 +417,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 exercise.copy(restTimeSeconds = seconds)
             } else exercise
         }
+        autoSaveCache()
     }
 
     private fun startRestTimer(seconds: Int) {
@@ -405,8 +456,8 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
             val workoutEntity = CompletedWorkoutEntity(
                 id = workoutId,
                 name = workoutName,
+                startTime = startTime,
                 dateCompleted = System.currentTimeMillis(),
-                durationMs = System.currentTimeMillis() - startTime
             )
 
             val exerciseEntities = mutableListOf<WorkoutExerciseEntity>()
@@ -442,6 +493,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
             }
 
             workoutDao.saveFullWorkout(workoutEntity, exerciseEntities, setEntities)
+            workoutDao.clearActiveWorkoutCache()
         }
     }
 
