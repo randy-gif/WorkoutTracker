@@ -6,10 +6,10 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.rvilleda.workouttracker.data.database.entity.ActiveWorkoutEntity
-import com.rvilleda.workouttracker.data.database.entity.workout.CompletedWorkoutEntity
-import com.rvilleda.workouttracker.data.database.entity.workout.FullWorkout
-import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutExerciseEntity
-import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutSetEntity
+import com.rvilleda.workouttracker.data.database.entity.CompletedWorkoutEntity
+import com.rvilleda.workouttracker.data.database.entity.FullWorkout
+import com.rvilleda.workouttracker.data.database.entity.WorkoutExerciseEntity
+import com.rvilleda.workouttracker.data.database.entity.WorkoutSetEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

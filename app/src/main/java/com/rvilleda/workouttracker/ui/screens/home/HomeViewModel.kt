@@ -3,7 +3,7 @@ package com.rvilleda.workouttracker.ui.screens.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rvilleda.workouttracker.data.database.dao.RoutineDao
-import com.rvilleda.workouttracker.data.database.entity.workout.CompletedWorkoutEntity
+import com.rvilleda.workouttracker.data.database.entity.CompletedWorkoutEntity
 import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
 import com.rvilleda.workouttracker.data.database.entity.FullRoutine
 import kotlinx.coroutines.flow.SharingStarted

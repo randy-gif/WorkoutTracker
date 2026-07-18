@@ -2,7 +2,6 @@ package com.rvilleda.workouttracker.ui.screens.activeworkout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
 import com.rvilleda.workouttracker.data.database.dao.RoutineDao
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import com.rvilleda.workouttracker.model.ExerciseSet
@@ -14,9 +13,9 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
 import com.rvilleda.workouttracker.data.database.entity.ActiveWorkoutEntity
-import com.rvilleda.workouttracker.data.database.entity.workout.CompletedWorkoutEntity
-import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutExerciseEntity
-import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutSetEntity
+import com.rvilleda.workouttracker.data.database.entity.CompletedWorkoutEntity
+import com.rvilleda.workouttracker.data.database.entity.WorkoutExerciseEntity
+import com.rvilleda.workouttracker.data.database.entity.WorkoutSetEntity
 import com.rvilleda.workouttracker.model.WeightUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job

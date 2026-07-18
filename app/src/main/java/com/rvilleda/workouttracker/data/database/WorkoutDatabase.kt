@@ -8,14 +8,13 @@ import androidx.room.TypeConverters
 import com.rvilleda.workouttracker.data.database.dao.ExerciseDao
 import com.rvilleda.workouttracker.data.database.dao.RoutineDao
 import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
-import com.rvilleda.workouttracker.data.database.entity.workout.CompletedWorkoutEntity
-import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutExerciseEntity
-import com.rvilleda.workouttracker.data.database.entity.workout.WorkoutSetEntity
+import com.rvilleda.workouttracker.data.database.entity.CompletedWorkoutEntity
+import com.rvilleda.workouttracker.data.database.entity.WorkoutExerciseEntity
+import com.rvilleda.workouttracker.data.database.entity.WorkoutSetEntity
 import com.rvilleda.workouttracker.data.database.entity.CustomExerciseEntity
 import com.rvilleda.workouttracker.data.database.entity.RoutineEntity
 import com.rvilleda.workouttracker.data.database.entity.RoutineExerciseEntity
 import com.rvilleda.workouttracker.data.database.entity.RoutineSetEntity
-import com.rvilleda.workouttracker.data.database.Converters
 import com.rvilleda.workouttracker.data.database.entity.ActiveWorkoutEntity
 
 
@@ -31,7 +30,7 @@ import com.rvilleda.workouttracker.data.database.entity.ActiveWorkoutEntity
         RoutineSetEntity::class,
         ActiveWorkoutEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
