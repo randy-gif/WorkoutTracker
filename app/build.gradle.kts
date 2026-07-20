@@ -71,5 +71,10 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
 
+    // Vico Charting Library
+    implementation("com.patrykandpatrick.vico:compose:1.14.0")
+    implementation("com.patrykandpatrick.vico:compose-m3:1.14.0")
+    implementation("com.patrykandpatrick.vico:core:1.14.0")
+
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }

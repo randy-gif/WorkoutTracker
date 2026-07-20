@@ -2,19 +2,28 @@ package com.rvilleda.workouttracker.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rvilleda.workouttracker.data.database.dao.OneRMTrendDataPoint
 import com.rvilleda.workouttracker.data.database.dao.RoutineDao
 import com.rvilleda.workouttracker.data.database.entity.CompletedWorkoutEntity
 import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
+import com.rvilleda.workouttracker.data.database.entity.ExerciseWithSets
 import com.rvilleda.workouttracker.data.database.entity.FullRoutine
+import com.rvilleda.workouttracker.data.database.entity.FullWorkout
+import com.rvilleda.workouttracker.data.database.entity.WorkoutExerciseEntity
 import com.rvilleda.workouttracker.model.WeightUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+
 
 class HomeViewModel(private val workoutDao: WorkoutDao, private val routineDao: RoutineDao) : ViewModel() {
 
@@ -54,9 +63,20 @@ class HomeViewModel(private val workoutDao: WorkoutDao, private val routineDao: 
     // --- Progress Tab ---
 
     private val currentUnit = MutableStateFlow(WeightUnit.LBS)
+    private val currentExerciseId = MutableStateFlow<String?>(null)
+
+    val latestWorkout: Flow<FullWorkout?> = workoutDao.getLatestFullWorkout()
+
+    val firstExercise: Flow<WorkoutExerciseEntity?> = workoutDao.getFirstExerciseOfLastWorkout()
+
+
 
     fun updateUnitPreference(unit: WeightUnit) {
         currentUnit.value = unit
+    }
+
+    fun updateExerciseTrendId(exerciseId: String) {
+        currentExerciseId.value = exerciseId
     }
 
     private val thirtyDaysAgoMillis: Long
@@ -66,6 +86,28 @@ class HomeViewModel(private val workoutDao: WorkoutDao, private val routineDao: 
             return calendar.timeInMillis
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val oneRMTrendThisMonth: StateFlow<List<OneRMTrendDataPoint>> = combine(
+        currentUnit,
+        currentExerciseId
+    ) { unit, exerciseId ->
+        Pair(unit, exerciseId)
+    }.flatMapLatest { (unit, exerciseId) ->
+        if (exerciseId == null) {
+            flowOf(emptyList())
+        } else {
+            workoutDao.getExercise1RMTrend(
+                exerciseId = exerciseId,
+                startDateMillis = thirtyDaysAgoMillis,
+                endDateMillis = System.currentTimeMillis(),
+                targetUnitName = unit.name
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
     val workoutsThisMonth: StateFlow<Int> = workoutDao.getWorkoutsCountSince(thirtyDaysAgoMillis)
         .stateIn(
             scope = viewModelScope,

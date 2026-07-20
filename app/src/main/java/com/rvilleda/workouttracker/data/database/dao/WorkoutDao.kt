@@ -12,6 +12,10 @@ import com.rvilleda.workouttracker.data.database.entity.WorkoutExerciseEntity
 import com.rvilleda.workouttracker.data.database.entity.WorkoutSetEntity
 import kotlinx.coroutines.flow.Flow
 
+data class OneRMTrendDataPoint(
+    val startTime: Long,
+    val estimatedMax: Double
+)
 @Dao
 interface WorkoutDao {
     @Insert
@@ -55,6 +59,45 @@ interface WorkoutDao {
     @Transaction
     @Query("SELECT * FROM completed_workouts WHERE id = :workoutId LIMIT 1")
     suspend fun getFullWorkoutById(workoutId: String): FullWorkout?
+
+    @Query("SELECT * FROM completed_workouts WHERE dateCompleted = (SELECT MAX(dateCompleted) FROM completed_workouts) LIMIT 1")
+    fun getLatestFullWorkout(): Flow<FullWorkout?>
+
+    @Query("""
+    SELECT e.* 
+    FROM workout_exercises e
+    INNER JOIN completed_workouts w ON e.workoutId = w.id
+    ORDER BY w.startTime DESC, e.orderInWorkout ASC
+    LIMIT 1
+""")
+    fun getFirstExerciseOfLastWorkout(): Flow<WorkoutExerciseEntity?>
+
+    @Query(
+        """
+    SELECT w.startTime, 
+           MAX(
+               (CASE 
+                    WHEN s.weightUnit = 'LBS' AND :targetUnitName = 'KG' THEN (s.weight / 2.20462)
+                    WHEN s.weightUnit = 'KG' AND :targetUnitName = 'LBS' THEN (s.weight * 2.20462)
+                    ELSE s.weight 
+                END) * (1.0 + (s.reps / 30.0))
+           ) AS estimatedMax
+    FROM workout_sets s
+    INNER JOIN workout_exercises e ON s.workoutExerciseId = e.id
+    INNER JOIN completed_workouts w ON e.workoutId = w.id
+    WHERE e.baseExerciseId = :exerciseId
+        AND w.startTime BETWEEN :startDateMillis AND :endDateMillis
+        AND s.isCompleted = 1
+    GROUP BY w.id 
+    ORDER BY w.startTime ASC
+"""
+    )
+    fun getExercise1RMTrend(
+        exerciseId: String,
+        startDateMillis: Long,
+        endDateMillis: Long,
+        targetUnitName: String
+    ): Flow<List<OneRMTrendDataPoint>>
 
     @Query("""
         SELECT SUM(

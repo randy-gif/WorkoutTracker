@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.rvilleda.workouttracker.model.WeightUnit
 
+
 @Entity(tableName = "completed_workouts")
 data class CompletedWorkoutEntity(
     @PrimaryKey val id: String,
