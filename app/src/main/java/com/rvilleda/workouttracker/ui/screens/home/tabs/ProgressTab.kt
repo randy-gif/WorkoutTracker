@@ -25,7 +25,11 @@ import com.patrykandpatrick.vico.compose.chart.line.lineSpec
 import com.patrykandpatrick.vico.compose.component.shape.shader.verticalGradient
 import com.patrykandpatrick.vico.core.chart.values.AxisValuesOverrider
 import android.graphics.Typeface
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.patrykandpatrick.vico.compose.component.lineComponent
 import com.patrykandpatrick.vico.compose.component.shapeComponent
 import com.patrykandpatrick.vico.compose.component.textComponent
@@ -40,32 +44,74 @@ import com.patrykandpatrick.vico.compose.axis.axisLabelComponent
 import com.patrykandpatrick.vico.core.axis.AxisItemPlacer
 import com.patrykandpatrick.vico.core.entry.FloatEntry
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Locale
 import java.util.Date
+
+enum class TimeRange(val displayName: String) {
+    DAY("Day"),
+    WEEK("Week"),
+    MONTH("Month"),
+    YEAR("Year"),
+    FIVE_YEARS("5 Years"),
+    ALL_TIME("All Time")
+}
 
 @Composable
 fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
 
+    // 2. State for the selected time range and dropdown visibility
+    var selectedTimeRange by remember { mutableStateOf(TimeRange.MONTH) }
 
-
-
+    var isTimeRangeDropdownExpanded by remember { mutableStateOf(false) }
     val firstExercise by viewModel.firstExercise.collectAsState(null)
 
-    val workoutsCount by viewModel.workoutsThisMonth.collectAsState()
-    val totalVolume by viewModel.volumeThisMonth.collectAsState()
-
-    val oneRepMaxTrend by viewModel.oneRMTrendThisMonth.collectAsState(emptyList())
+    // Note: You will need to update these ViewModel variables to react to the selected time range
+    val workoutsCount by viewModel.workoutsCount.collectAsState(0)
+    val totalVolume by viewModel.totalVolume.collectAsState(0.0)
+    val oneRepMaxTrend by viewModel.oneRMTrend.collectAsState(emptyList())
 
     LaunchedEffect(globalUnit) {
         viewModel.updateUnitPreference(globalUnit)
-
     }
+
     LaunchedEffect(firstExercise) {
         firstExercise?.let { exercise ->
             viewModel.updateExerciseTrendId(exercise.baseExerciseId)
         }
     }
 
+    LaunchedEffect(selectedTimeRange) {
+        val calendar = Calendar.getInstance()
+
+        val startTimestamp = when (selectedTimeRange) {
+            TimeRange.DAY -> {
+                calendar.add(Calendar.DAY_OF_YEAR, -1)
+                calendar.timeInMillis
+            }
+            TimeRange.WEEK -> {
+                calendar.add(Calendar.DAY_OF_YEAR, -7)
+                calendar.timeInMillis
+            }
+            TimeRange.MONTH -> {
+                calendar.add(Calendar.MONTH, -1)
+                calendar.timeInMillis
+            }
+            TimeRange.YEAR -> {
+                calendar.add(Calendar.YEAR, -1)
+                calendar.timeInMillis
+            }
+            TimeRange.FIVE_YEARS -> {
+                calendar.add(Calendar.YEAR, -5)
+                calendar.timeInMillis
+            }
+            TimeRange.ALL_TIME -> {
+                0L // 0 represents the Unix Epoch (beginning of time), grabbing everything
+            }
+        }
+
+        viewModel.updateSelectedTimeRange(startTimestamp)
+    }
 
     val formattedVolume = viewModel.formatVolume(totalVolume)
 
@@ -80,28 +126,57 @@ fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
+            // 4. Header Row with Title and Dropdown Menu
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Overview",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
 
-            Text(
-                text = "Overview",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+                Box {
+                    TextButton(onClick = { isTimeRangeDropdownExpanded = true }) {
+                        Text(text = selectedTimeRange.displayName)
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Select Time Range"
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = isTimeRangeDropdownExpanded,
+                        onDismissRequest = { isTimeRangeDropdownExpanded = false }
+                    ) {
+                        TimeRange.values().forEach { range ->
+                            DropdownMenuItem(
+                                text = { Text(range.displayName) },
+                                onClick = {
+                                    selectedTimeRange = range
+                                    isTimeRangeDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
 
             Row(
-
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
-
             ) {
-
                 StatCard(
                     title = "Workouts",
                     value = workoutsCount.toString(),
-                    subtitle = "This Month",
+                    // Make subtitle dynamic based on range
+                    subtitle = "This ${selectedTimeRange.displayName}",
                     modifier = Modifier.weight(1f)
-
                 )
 
                 StatCard(
@@ -110,9 +185,9 @@ fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
                     subtitle = "$globalUnit Lifted",
                     modifier = Modifier.weight(1f)
                 )
-
             }
         }
+
         item {
             Text(
                 text = "Consistency",
@@ -128,15 +203,15 @@ fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                // Wrap in a Column so we can add a title inside the card
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Workouts per Week",
+                        text = "Workouts Over Time",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
+                    // TODO: Replace with dynamic data from ViewModel based on selectedTimeRange
                     val consistencyMockData = entryModelOf(2, 4, 3, 5)
 
                     Chart(
@@ -152,14 +227,12 @@ fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
                         marker = consistencyMarker,
                         startAxis = rememberStartAxis(
                             label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                            // Force whole numbers
                             itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = consistencyMockData.maxY.toInt() + 1),
-                            // 3. Since we forced whole numbers, our formatter is super clean again
                             valueFormatter = { value, _ -> value.toInt().toString() }
                         ),
                         bottomAxis = rememberBottomAxis(
                             label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                            // Label the bottom axis as Weeks
+                            // Optional TODO: Adjust X-axis labels based on time range (e.g., Days vs Weeks vs Months)
                             valueFormatter = { value, _ -> "Wk ${value.toInt() + 1}" }
                         ),
                         modifier = Modifier
@@ -187,7 +260,6 @@ fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
 
-                    // The Header Row for the Chart
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -205,7 +277,6 @@ fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        // A button for the future when you wire up the exercise selector
                         TextButton(onClick = { /* TODO: Open exercise selector */ }) {
                             Text("Change")
                         }
@@ -217,11 +288,10 @@ fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
                         val entries = oneRepMaxTrend.mapIndexed { index, dataPoint ->
                             FloatEntry(
                                 x = index.toFloat(),
-                                y = dataPoint.estimatedMax.toFloat() // Replace .weight with your actual property name
+                                y = dataPoint.estimatedMax.toFloat()
                             )
                         }
 
-                        // Fallback to a single 0f entry if the list is empty to prevent chart crashes
                         if (entries.isEmpty()) {
                             entryModelOf(List(1){FloatEntry(0f, 0f)})
                         } else {
@@ -235,53 +305,64 @@ fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
 
                     val primaryColor = MaterialTheme.colorScheme.primary
 
-                    Chart(
-                        chart = lineChart(
-                            lines = listOf(
-                                lineSpec(
-                                    lineColor = primaryColor,
-                                    lineThickness = 3.dp,
-                                    lineBackgroundShader = verticalGradient(
-                                        colors = arrayOf(primaryColor.copy(alpha = 0.4f), Color.Transparent)
-                                    ),
-                                    point = shapeComponent(
-                                        shape = Shapes.pillShape,
-                                        color = primaryColor,
-                                    ),
-                                    pointSize = 8.dp
-                                )
+                    // Conditionally render the chart or an empty state message
+                    if (oneRepMaxTrend.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Not enough data for this time range.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        Chart(
+                            chart = lineChart(
+                                lines = listOf(
+                                    lineSpec(
+                                        lineColor = primaryColor,
+                                        lineThickness = 3.dp,
+                                        lineBackgroundShader = verticalGradient(
+                                            colors = arrayOf(primaryColor.copy(alpha = 0.4f), Color.Transparent)
+                                        ),
+                                        point = shapeComponent(
+                                            shape = Shapes.pillShape,
+                                            color = primaryColor,
+                                        ),
+                                        pointSize = 8.dp
+                                    )
+                                ),
+                                axisValuesOverrider = AxisValuesOverrider.adaptiveYValues(yFraction = 1.05f, round = true)
                             ),
-                            axisValuesOverrider = AxisValuesOverrider.adaptiveYValues(yFraction = 1.05f, round = true)
-                        ),
-                        model = trendOneRepMax,
-                        marker = trendMarker,
-                        startAxis = rememberStartAxis(
-                            label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                            // Appends "LBS" or "KG" to the numbers on the left!
-                            valueFormatter = { value, _ -> "${value.toInt()} ${globalUnit.name}" }
-                        ),
-                        bottomAxis = rememberBottomAxis(
-                            guideline = null,
-                            label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                            // Labels the bottom axis as Session 1, Session 2, etc.
-                            valueFormatter = { value, _ ->
-                                val index = value.toInt()
+                            model = trendOneRepMax,
+                            marker = trendMarker,
+                            startAxis = rememberStartAxis(
+                                label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                                valueFormatter = { value, _ -> "${value.toInt()} ${globalUnit.name}" }
+                            ),
+                            bottomAxis = rememberBottomAxis(
+                                guideline = null,
+                                label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                                valueFormatter = { value, _ ->
+                                    val index = value.toInt()
+                                    val dataPoint = oneRepMaxTrend.getOrNull(index)
 
-                                // 3. Look up the original data point safely
-                                val dataPoint = oneRepMaxTrend.getOrNull(index)
-
-                                if (dataPoint != null) {
-                                    // Format the timestamp into "MMM dd" (e.g., "Jul 19")
-                                    dateFormatter.format(Date(dataPoint.startTime))
-                                } else {
-                                    "" // Fallback if out of bounds
+                                    if (dataPoint != null) {
+                                        dateFormatter.format(Date(dataPoint.startTime))
+                                    } else {
+                                        ""
+                                    }
                                 }
-                            }
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                    )
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                        )
+                    }
                 }
             }
         }
@@ -356,16 +437,12 @@ fun rememberMarker(unitLabel: String = ""): Marker {
             init {
                 indicatorSizeDp = 12f
 
-                // FIX: Explicitly extract the Y value and format the text
                 labelFormatter = object : MarkerLabelFormatter {
                     override fun getLabel(
                         markedEntries: List<Marker.EntryModel>,
                         chartValues: ChartValues
                     ): CharSequence {
-                        // Grab the exact Y value of the point the user tapped
                         val yValue = markedEntries.firstOrNull()?.entry?.y ?: 0f
-
-                        // Output: "145 LBS" or "145 KG"
                         return if (unitLabel.isNotBlank()) {
                             "${yValue.toInt()} $unitLabel"
                         } else {

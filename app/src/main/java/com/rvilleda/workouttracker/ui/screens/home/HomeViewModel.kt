@@ -6,7 +6,6 @@ import com.rvilleda.workouttracker.data.database.dao.OneRMTrendDataPoint
 import com.rvilleda.workouttracker.data.database.dao.RoutineDao
 import com.rvilleda.workouttracker.data.database.entity.CompletedWorkoutEntity
 import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
-import com.rvilleda.workouttracker.data.database.entity.ExerciseWithSets
 import com.rvilleda.workouttracker.data.database.entity.FullRoutine
 import com.rvilleda.workouttracker.data.database.entity.FullWorkout
 import com.rvilleda.workouttracker.data.database.entity.WorkoutExerciseEntity
@@ -16,7 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -65,6 +63,16 @@ class HomeViewModel(private val workoutDao: WorkoutDao, private val routineDao: 
     private val currentUnit = MutableStateFlow(WeightUnit.LBS)
     private val currentExerciseId = MutableStateFlow<String?>(null)
 
+    private val thirtyDaysAgoMillis: Long
+        get() {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.DAY_OF_YEAR, -30)
+            return calendar.timeInMillis
+        }
+
+
+    private val startDateMillis = MutableStateFlow(0L)
+
     val latestWorkout: Flow<FullWorkout?> = workoutDao.getLatestFullWorkout()
 
     val firstExercise: Flow<WorkoutExerciseEntity?> = workoutDao.getFirstExerciseOfLastWorkout()
@@ -79,26 +87,25 @@ class HomeViewModel(private val workoutDao: WorkoutDao, private val routineDao: 
         currentExerciseId.value = exerciseId
     }
 
-    private val thirtyDaysAgoMillis: Long
-        get() {
-            val calendar = Calendar.getInstance()
-            calendar.add(Calendar.DAY_OF_YEAR, -30)
-            return calendar.timeInMillis
-        }
+    fun updateSelectedTimeRange(timeInMillis: Long) {
+        startDateMillis.value = timeInMillis
+    }
+
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val oneRMTrendThisMonth: StateFlow<List<OneRMTrendDataPoint>> = combine(
+    val oneRMTrend: StateFlow<List<OneRMTrendDataPoint>> = combine(
         currentUnit,
-        currentExerciseId
-    ) { unit, exerciseId ->
-        Pair(unit, exerciseId)
-    }.flatMapLatest { (unit, exerciseId) ->
+        currentExerciseId,
+        startDateMillis
+    ) { unit, exerciseId, startDate ->
+        Triple(unit, exerciseId, startDate)
+    }.flatMapLatest { (unit, exerciseId, startDate) ->
         if (exerciseId == null) {
             flowOf(emptyList())
         } else {
             workoutDao.getExercise1RMTrend(
                 exerciseId = exerciseId,
-                startDateMillis = thirtyDaysAgoMillis,
+                startDateMillis = startDate,
                 endDateMillis = System.currentTimeMillis(),
                 targetUnitName = unit.name
             )
@@ -108,7 +115,11 @@ class HomeViewModel(private val workoutDao: WorkoutDao, private val routineDao: 
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
-    val workoutsThisMonth: StateFlow<Int> = workoutDao.getWorkoutsCountSince(thirtyDaysAgoMillis)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val workoutsCount: StateFlow<Int> = startDateMillis
+        .flatMapLatest { startDate ->
+            workoutDao.getWorkoutsCountSince(startDate)
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -116,8 +127,13 @@ class HomeViewModel(private val workoutDao: WorkoutDao, private val routineDao: 
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val volumeThisMonth: StateFlow<Double?> = currentUnit.flatMapLatest { unit ->
-        workoutDao.getTotalVolumeSince(thirtyDaysAgoMillis, unit.name)
+    val totalVolume: StateFlow<Double?> = combine(
+        currentUnit,
+        startDateMillis
+    ) { unit, startDate ->
+        Pair(unit, startDate)
+    }.flatMapLatest { (unit, startDate) ->
+        workoutDao.getTotalVolumeSince(startDate, unit.name)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
