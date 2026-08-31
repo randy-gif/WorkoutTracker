@@ -43,36 +43,29 @@ import com.patrykandpatrick.vico.core.chart.values.ChartValues
 import com.patrykandpatrick.vico.compose.axis.axisLabelComponent
 import com.patrykandpatrick.vico.core.axis.AxisItemPlacer
 import com.patrykandpatrick.vico.core.entry.FloatEntry
+import com.rvilleda.workouttracker.ui.screens.home.TimeRange
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import java.util.Date
 
-enum class TimeRange(val displayName: String) {
-    DAY("Day"),
-    WEEK("Week"),
-    MONTH("Month"),
-    YEAR("Year"),
-    FIVE_YEARS("5 Years"),
-    ALL_TIME("All Time")
-}
-
 @Composable
 fun ProgressTab(
     globalUnit: WeightUnit,
     onChangeExerciseTrend: () -> Unit,
-    viewModel: HomeViewModel) {
-
-    // 2. State for the selected time range and dropdown visibility
+    viewModel: HomeViewModel
+) {
     var selectedTimeRange by remember { mutableStateOf(TimeRange.MONTH) }
-
     var isTimeRangeDropdownExpanded by remember { mutableStateOf(false) }
+
     val trendExercisePreference by viewModel.trendExercisePreference.collectAsState()
 
-    // Note: You will need to update these ViewModel variables to react to the selected time range
     val workoutsCount by viewModel.workoutsCount.collectAsState(0)
     val totalVolume by viewModel.totalVolume.collectAsState(0.0)
+
+    // 1. Collect the newly created flows from the ViewModel
     val oneRepMaxTrend by viewModel.oneRMTrend.collectAsState(emptyList())
+    val workoutCountTrend by viewModel.workoutCountTrend.collectAsState(emptyList())
 
     LaunchedEffect(globalUnit) {
         viewModel.updateUnitPreference(globalUnit)
@@ -103,17 +96,25 @@ fun ProgressTab(
                 calendar.timeInMillis
             }
             TimeRange.ALL_TIME -> {
-                0L // 0 represents the Unix Epoch (beginning of time), grabbing everything
+                0L
             }
         }
 
-        viewModel.updateSelectedTimeRange(startTimestamp)
+        // 2. Pass BOTH the selected range and timestamp to the ViewModel
+        viewModel.updateSelectedTimeRange(selectedTimeRange, startTimestamp)
     }
 
     val formattedVolume = viewModel.formatVolume(totalVolume)
-
     val consistencyMarker = rememberMarker()
     val trendMarker = rememberMarker(unitLabel = globalUnit.name)
+
+    // 3. Dynamic Date Formatter based on Time Range
+    val dateFormatter = remember(selectedTimeRange) {
+        when (selectedTimeRange) {
+            TimeRange.FIVE_YEARS, TimeRange.ALL_TIME -> SimpleDateFormat("MMM yyyy", Locale.getDefault())
+            else -> SimpleDateFormat("MMM dd", Locale.getDefault())
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -123,7 +124,6 @@ fun ProgressTab(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
-            // 4. Header Row with Title and Dropdown Menu
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -171,7 +171,6 @@ fun ProgressTab(
                 StatCard(
                     title = "Workouts",
                     value = workoutsCount.toString(),
-                    // Make subtitle dynamic based on range
                     subtitle = "This ${selectedTimeRange.displayName}",
                     modifier = Modifier.weight(1f)
                 )
@@ -208,34 +207,64 @@ fun ProgressTab(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
-                    // TODO: Replace with dynamic data from ViewModel based on selectedTimeRange
-                    val consistencyMockData = entryModelOf(2, 4, 3, 5)
+                    // 4. Map real consistency data to Chart Model
+                    val consistencyModel = remember(workoutCountTrend) {
+                        if (workoutCountTrend.isEmpty()) null else {
+                            val entries = workoutCountTrend.mapIndexed { index, dataPoint ->
+                                FloatEntry(x = index.toFloat(), y = dataPoint.workoutCount.toFloat())
+                            }
+                            entryModelOf(entries)
+                        }
+                    }
 
-                    Chart(
-                        chart = columnChart(
-                            columns = listOf(
-                                lineComponent(
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
+                    if (consistencyModel == null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No workouts recorded for this time range.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        Chart(
+                            chart = columnChart(
+                                columns = listOf(
+                                    lineComponent(
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
+                                ),
+                                axisValuesOverrider = AxisValuesOverrider.fixed(minY = 0f, maxY = consistencyModel.maxY * 1.2f)
                             ),
-                            axisValuesOverrider = AxisValuesOverrider.fixed(minY = 0f, maxY = consistencyMockData.maxY)
-                        ),
-                        model = consistencyMockData,
-                        marker = consistencyMarker,
-                        startAxis = rememberStartAxis(
-                            label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                            itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = consistencyMockData.maxY.toInt() + 1),
-                            valueFormatter = { value, _ -> value.toInt().toString() }
-                        ),
-                        bottomAxis = rememberBottomAxis(
-                            label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                            // Optional TODO: Adjust X-axis labels based on time range (e.g., Days vs Weeks vs Months)
-                            valueFormatter = { value, _ -> "Wk ${value.toInt() + 1}" }
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                    )
+                            model = consistencyModel,
+                            marker = consistencyMarker,
+                            startAxis = rememberStartAxis(
+                                label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                                itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = (consistencyModel.maxY + 1).toInt().coerceAtMost(6)),
+                                valueFormatter = { value, _ -> value.toInt().toString() }
+                            ),
+                            bottomAxis = rememberBottomAxis(
+                                label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                                // 5. Use real dates instead of "Wk 1"
+                                valueFormatter = { value, _ ->
+                                    val index = value.toInt()
+                                    val dataPoint = workoutCountTrend.getOrNull(index)
+                                    if (dataPoint != null) {
+                                        dateFormatter.format(Date(dataPoint.startTime))
+                                    } else {
+                                        ""
+                                    }
+                                }
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                        )
+                    }
                 }
             }
         }
@@ -282,28 +311,20 @@ fun ProgressTab(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     val trendOneRepMax = remember(oneRepMaxTrend) {
-                        val entries = oneRepMaxTrend.mapIndexed { index, dataPoint ->
-                            FloatEntry(
-                                x = index.toFloat(),
-                                y = dataPoint.estimatedMax.toFloat()
-                            )
-                        }
-
-                        if (entries.isEmpty()) {
-                            entryModelOf(List(1){FloatEntry(0f, 0f)})
-                        } else {
+                        if (oneRepMaxTrend.isEmpty()) null else {
+                            val entries = oneRepMaxTrend.mapIndexed { index, dataPoint ->
+                                FloatEntry(
+                                    x = index.toFloat(),
+                                    y = dataPoint.estimatedMax.toFloat()
+                                )
+                            }
                             entryModelOf(entries)
                         }
                     }
 
-                    val dateFormatter = remember {
-                        SimpleDateFormat("MMM dd", Locale.getDefault())
-                    }
-
                     val primaryColor = MaterialTheme.colorScheme.primary
 
-                    // Conditionally render the chart or an empty state message
-                    if (oneRepMaxTrend.isEmpty()) {
+                    if (trendOneRepMax == null) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -344,6 +365,7 @@ fun ProgressTab(
                             bottomAxis = rememberBottomAxis(
                                 guideline = null,
                                 label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                                // 6. Shared date formatter for 1RM chart too
                                 valueFormatter = { value, _ ->
                                     val index = value.toInt()
                                     val dataPoint = oneRepMaxTrend.getOrNull(index)

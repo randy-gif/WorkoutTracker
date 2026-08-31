@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rvilleda.workouttracker.data.database.dao.OneRMTrendDataPoint
 import com.rvilleda.workouttracker.data.database.dao.RoutineDao
+import com.rvilleda.workouttracker.data.database.dao.WorkoutCountTrendDataPoint
 import com.rvilleda.workouttracker.data.database.entity.CompletedWorkoutEntity
 import com.rvilleda.workouttracker.data.database.dao.WorkoutDao
 import com.rvilleda.workouttracker.data.database.entity.FullRoutine
@@ -21,6 +22,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import com.rvilleda.workouttracker.model.allDefaultExercises
 
+enum class TimeRange(val displayName: String) {
+    DAY("Day"),
+    WEEK("Week"),
+    MONTH("Month"),
+    YEAR("Year"),
+    FIVE_YEARS("5 Years"),
+    ALL_TIME("All Time")
+}
 
 class HomeViewModel(
     private val workoutDao: WorkoutDao,
@@ -56,8 +65,16 @@ class HomeViewModel(
 
     // --- Progress Tab ---
 
+    private data class TrendConfig(
+        val unit: WeightUnit,
+        val exerciseId: String?,
+        val startDateMillis: Long,
+        val timeRange: TimeRange
+    )
+    val selectedTimeRange = MutableStateFlow(TimeRange.MONTH)
     private val currentUnit = MutableStateFlow(WeightUnit.LBS)
     private val startDateMillis = MutableStateFlow(0L)
+
     val trendExercisePreference = preferencesRepository.selectedTrendExercise
         .stateIn(
             scope = viewModelScope,
@@ -84,41 +101,53 @@ class HomeViewModel(
             }
         }
     }
-
-    fun updateExerciseTrend(exerciseId: String, exerciseName: String) {
-        viewModelScope.launch {
-            preferencesRepository.saveTrendExercisePreference(exerciseId, exerciseName)
-        }
-    }
-
-
-    fun updateUnitPreference(unit: WeightUnit) {
-        currentUnit.value = unit
-    }
-
-    fun updateSelectedTimeRange(timeInMillis: Long) {
-        startDateMillis.value = timeInMillis
-    }
-
-
     @OptIn(ExperimentalCoroutinesApi::class)
     val oneRMTrend: StateFlow<List<OneRMTrendDataPoint>> = combine(
         currentUnit,
         trendExercisePreference,
-        startDateMillis
-    ) { unit, preferencePair, startDate ->
+        startDateMillis,
+        selectedTimeRange
+    ) { unit, preferencePair, startDate, timeRange ->
+
         val (exerciseId, _) = preferencePair
-        Triple(unit, exerciseId, startDate)
-    }.flatMapLatest { (unit, exerciseId, startDate) ->
-        if (exerciseId == null) {
+        // Return our custom data class instead of Quad
+        TrendConfig(unit, exerciseId, startDate, timeRange)
+
+    }.flatMapLatest { config ->
+
+        if (config.exerciseId == null) {
             flowOf(emptyList())
         } else {
-            workoutDao.getExercise1RMTrend(
-                exerciseId = exerciseId,
-                startDateMillis = startDate,
-                endDateMillis = System.currentTimeMillis(),
-                targetUnitName = unit.name
-            )
+            val endDate = System.currentTimeMillis()
+            when (config.timeRange) {
+                TimeRange.DAY, TimeRange.WEEK, TimeRange.MONTH ->
+                    workoutDao.getExercise1RMTrendDaily(config.exerciseId, config.startDateMillis, endDate, config.unit.name)
+                TimeRange.YEAR ->
+                    workoutDao.getExercise1RMTrendWeekly(config.exerciseId, config.startDateMillis, endDate, config.unit.name)
+                TimeRange.FIVE_YEARS, TimeRange.ALL_TIME ->
+                    workoutDao.getExercise1RMTrendMonthly(config.exerciseId, config.startDateMillis, endDate, config.unit.name)
+            }
+        }
+
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+    val workoutCountTrend: StateFlow<List<WorkoutCountTrendDataPoint>> = combine(
+        selectedTimeRange, // e.g., TimeRange enum (DAY, WEEK, MONTH, YEAR, FIVE_YEARS, ALL)
+        startDateMillis
+    ) { timeRange, startDate ->
+        Pair(timeRange, startDate)
+    }.flatMapLatest { (timeRange, startDate) ->
+        val endDate = System.currentTimeMillis()
+        when (timeRange) {
+            TimeRange.DAY, TimeRange.WEEK, TimeRange.MONTH ->
+                workoutDao.getWorkoutCountTrendDaily(startDate, endDate)
+            TimeRange.YEAR ->
+                workoutDao.getWorkoutCountTrendWeekly(startDate, endDate)
+            TimeRange.FIVE_YEARS, TimeRange.ALL_TIME ->
+                workoutDao.getWorkoutCountTrendMonthly(startDate, endDate)
         }
     }.stateIn(
         scope = viewModelScope,
@@ -150,7 +179,21 @@ class HomeViewModel(
         initialValue = 0.0
     )
 
+    fun updateExerciseTrend(exerciseId: String, exerciseName: String) {
+        viewModelScope.launch {
+            preferencesRepository.saveTrendExercisePreference(exerciseId, exerciseName)
+        }
+    }
 
+
+    fun updateUnitPreference(unit: WeightUnit) {
+        currentUnit.value = unit
+    }
+
+    fun updateSelectedTimeRange(timeRange: TimeRange, timeInMillis: Long) {
+        selectedTimeRange.value = timeRange
+        startDateMillis.value = timeInMillis
+    }
     fun formatVolume(volume: Double?): String {
         if (volume == null || volume == 0.0) return "0.0"
 

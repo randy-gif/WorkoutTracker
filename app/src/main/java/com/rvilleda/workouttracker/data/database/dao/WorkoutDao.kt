@@ -16,6 +16,10 @@ data class OneRMTrendDataPoint(
     val startTime: Long,
     val estimatedMax: Double
 )
+data class WorkoutCountTrendDataPoint(
+    val startTime: Long,
+    val workoutCount: Int
+)
 @Dao
 interface WorkoutDao {
     @Insert
@@ -62,37 +66,130 @@ interface WorkoutDao {
 
     @Query("SELECT * FROM completed_workouts WHERE dateCompleted = (SELECT MAX(dateCompleted) FROM completed_workouts) LIMIT 1")
     fun getLatestFullWorkout(): Flow<FullWorkout?>
-
-    @Query("""
-    SELECT e.* 
-    FROM workout_exercises e
-    INNER JOIN completed_workouts w ON e.workoutId = w.id
-    ORDER BY w.startTime DESC, e.orderInWorkout ASC
-    LIMIT 1
-""")
-    fun getFirstExerciseOfLastWorkout(): Flow<WorkoutExerciseEntity?>
-
+    // 1. DAILY GROUPING (For Day, Week, Month)
     @Query(
         """
-    SELECT w.startTime, 
-           MAX(
-               (CASE 
-                    WHEN s.weightUnit = 'LBS' AND :targetUnitName = 'KG' THEN (s.weight / 2.20462)
-                    WHEN s.weightUnit = 'KG' AND :targetUnitName = 'LBS' THEN (s.weight * 2.20462)
-                    ELSE s.weight 
-                END) * (1.0 + (s.reps / 30.0))
-           ) AS estimatedMax
-    FROM workout_sets s
-    INNER JOIN workout_exercises e ON s.workoutExerciseId = e.id
-    INNER JOIN completed_workouts w ON e.workoutId = w.id
-    WHERE e.baseExerciseId = :exerciseId
-        AND w.startTime BETWEEN :startDateMillis AND :endDateMillis
-        AND s.isCompleted = 1
-    GROUP BY w.id 
-    ORDER BY w.startTime ASC
-"""
+        SELECT MIN(startTime) AS startTime, COUNT(id) AS workoutCount
+        FROM completed_workouts
+        WHERE startTime BETWEEN :startDateMillis AND :endDateMillis
+        GROUP BY (startTime / 86400000)
+        ORDER BY startTime ASC
+    """
     )
-    fun getExercise1RMTrend(
+    fun getWorkoutCountTrendDaily(startDateMillis: Long, endDateMillis: Long): Flow<List<WorkoutCountTrendDataPoint>>
+
+    // 2. WEEKLY GROUPING (For Year view)
+    @Query(
+        """
+        SELECT MIN(startTime) AS startTime, COUNT(id) AS workoutCount
+        FROM completed_workouts
+        WHERE startTime BETWEEN :startDateMillis AND :endDateMillis
+        GROUP BY strftime('%Y-%W', startTime / 1000, 'unixepoch')
+        ORDER BY startTime ASC
+    """
+    )
+    fun getWorkoutCountTrendWeekly(startDateMillis: Long, endDateMillis: Long): Flow<List<WorkoutCountTrendDataPoint>>
+
+    // 3. MONTHLY GROUPING (For 5 Years / All Time view)
+    @Query(
+        """
+        SELECT MIN(startTime) AS startTime, COUNT(id) AS workoutCount
+        FROM completed_workouts
+        WHERE startTime BETWEEN :startDateMillis AND :endDateMillis
+        GROUP BY strftime('%Y-%m', startTime / 1000, 'unixepoch')
+        ORDER BY startTime ASC
+    """
+    )
+    fun getWorkoutCountTrendMonthly(startDateMillis: Long, endDateMillis: Long): Flow<List<WorkoutCountTrendDataPoint>>
+
+    // 1. DAILY (For Day, Week, Month view - every workout session shown)
+    @Query(
+        """
+        SELECT w.startTime, 
+               MAX(
+                   (CASE 
+                        WHEN s.weightUnit = 'LBS' AND :targetUnitName = 'KG' THEN (s.weight / 2.20462)
+                        WHEN s.weightUnit = 'KG' AND :targetUnitName = 'LBS' THEN (s.weight * 2.20462)
+                        ELSE s.weight 
+                    END) * (1.0 + (s.reps / 30.0))
+               ) AS estimatedMax
+        FROM workout_sets s
+        INNER JOIN workout_exercises e ON s.workoutExerciseId = e.id
+        INNER JOIN completed_workouts w ON e.workoutId = w.id
+        WHERE e.baseExerciseId = :exerciseId
+            AND w.startTime BETWEEN :startDateMillis AND :endDateMillis
+            AND s.isCompleted = 1
+        GROUP BY w.id 
+        ORDER BY w.startTime ASC
+    """
+    )
+    fun getExercise1RMTrendDaily(
+        exerciseId: String,
+        startDateMillis: Long,
+        endDateMillis: Long,
+        targetUnitName: String
+    ): Flow<List<OneRMTrendDataPoint>>
+
+    // 2. WEEKLY (For Year view - peak 1RM per week)
+    @Query(
+        """
+        WITH SessionMaxes AS (
+            SELECT w.startTime, 
+                   MAX(
+                       (CASE 
+                            WHEN s.weightUnit = 'LBS' AND :targetUnitName = 'KG' THEN (s.weight / 2.20462)
+                            WHEN s.weightUnit = 'KG' AND :targetUnitName = 'LBS' THEN (s.weight * 2.20462)
+                            ELSE s.weight 
+                        END) * (1.0 + (s.reps / 30.0))
+                   ) AS estimatedMax
+            FROM workout_sets s
+            INNER JOIN workout_exercises e ON s.workoutExerciseId = e.id
+            INNER JOIN completed_workouts w ON e.workoutId = w.id
+            WHERE e.baseExerciseId = :exerciseId
+                AND w.startTime BETWEEN :startDateMillis AND :endDateMillis
+                AND s.isCompleted = 1
+            GROUP BY w.id
+        )
+        SELECT MIN(startTime) AS startTime, MAX(estimatedMax) AS estimatedMax
+        FROM SessionMaxes
+        GROUP BY strftime('%Y-%W', startTime / 1000, 'unixepoch')
+        ORDER BY startTime ASC
+    """
+    )
+    fun getExercise1RMTrendWeekly(
+        exerciseId: String,
+        startDateMillis: Long,
+        endDateMillis: Long,
+        targetUnitName: String
+    ): Flow<List<OneRMTrendDataPoint>>
+
+    // 3. MONTHLY (For 5 Years / All Time view - peak 1RM per month)
+    @Query(
+        """
+        WITH SessionMaxes AS (
+            SELECT w.startTime, 
+                   MAX(
+                       (CASE 
+                            WHEN s.weightUnit = 'LBS' AND :targetUnitName = 'KG' THEN (s.weight / 2.20462)
+                            WHEN s.weightUnit = 'KG' AND :targetUnitName = 'LBS' THEN (s.weight * 2.20462)
+                            ELSE s.weight 
+                        END) * (1.0 + (s.reps / 30.0))
+                   ) AS estimatedMax
+            FROM workout_sets s
+            INNER JOIN workout_exercises e ON s.workoutExerciseId = e.id
+            INNER JOIN completed_workouts w ON e.workoutId = w.id
+            WHERE e.baseExerciseId = :exerciseId
+                AND w.startTime BETWEEN :startDateMillis AND :endDateMillis
+                AND s.isCompleted = 1
+            GROUP BY w.id
+        )
+        SELECT MIN(startTime) AS startTime, MAX(estimatedMax) AS estimatedMax
+        FROM SessionMaxes
+        GROUP BY strftime('%Y-%m', startTime / 1000, 'unixepoch')
+        ORDER BY startTime ASC
+    """
+    )
+    fun getExercise1RMTrendMonthly(
         exerciseId: String,
         startDateMillis: Long,
         endDateMillis: Long,
