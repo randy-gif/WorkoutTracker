@@ -58,13 +58,16 @@ enum class TimeRange(val displayName: String) {
 }
 
 @Composable
-fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
+fun ProgressTab(
+    globalUnit: WeightUnit,
+    onChangeExerciseTrend: () -> Unit,
+    viewModel: HomeViewModel) {
 
     // 2. State for the selected time range and dropdown visibility
     var selectedTimeRange by remember { mutableStateOf(TimeRange.MONTH) }
 
     var isTimeRangeDropdownExpanded by remember { mutableStateOf(false) }
-    val firstExercise by viewModel.firstExercise.collectAsState(null)
+    val trendExercisePreference by viewModel.trendExercisePreference.collectAsState()
 
     // Note: You will need to update these ViewModel variables to react to the selected time range
     val workoutsCount by viewModel.workoutsCount.collectAsState(0)
@@ -73,12 +76,6 @@ fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
 
     LaunchedEffect(globalUnit) {
         viewModel.updateUnitPreference(globalUnit)
-    }
-
-    LaunchedEffect(firstExercise) {
-        firstExercise?.let { exercise ->
-            viewModel.updateExerciseTrendId(exercise.baseExerciseId)
-        }
     }
 
     LaunchedEffect(selectedTimeRange) {
@@ -267,7 +264,7 @@ fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
                     ) {
                         Column {
                             Text(
-                                text = firstExercise?.exerciseName ?: "",
+                                text = trendExercisePreference.second,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -277,7 +274,7 @@ fun ProgressTab(globalUnit: WeightUnit, viewModel: HomeViewModel) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        TextButton(onClick = { /* TODO: Open exercise selector */ }) {
+                        TextButton(onClick = onChangeExerciseTrend) {
                             Text("Change")
                         }
                     }

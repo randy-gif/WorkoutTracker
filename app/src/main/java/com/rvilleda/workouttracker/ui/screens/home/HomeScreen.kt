@@ -38,6 +38,7 @@ fun HomeScreen(
     onStartRoutineClick: (String) -> Unit,
     onEditRoutineClick: (String) -> Unit,
     onCreateRoutineClick: () -> Unit,
+    onChangeExerciseTrend: () -> Unit,
     globalUnit: WeightUnit
 ) {
 
@@ -101,7 +102,7 @@ fun HomeScreen(
                 when(HomeTopTabs.entries[page]) {
                     HomeTopTabs.DASHBOARD -> DashboardTab()
                     HomeTopTabs.ROUTINES -> RoutinesTab(onCreateRoutineClick, onStartRoutineClick, onEditRoutineClick, viewModel)
-                    HomeTopTabs.PROGRESS -> ProgressTab(globalUnit, viewModel)
+                    HomeTopTabs.PROGRESS -> ProgressTab(globalUnit, onChangeExerciseTrend, viewModel)
                     HomeTopTabs.AI_COACH -> AICoach()
                 }
             }

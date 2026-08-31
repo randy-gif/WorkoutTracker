@@ -1,5 +1,6 @@
 package com.rvilleda.workouttracker
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,14 +12,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.lifecycleScope // <-- 1. ADD THIS IMPORT
+import androidx.datastore.core.DataStore // <-- Add this
+import androidx.datastore.preferences.core.Preferences // <-- Add this
+import androidx.datastore.preferences.preferencesDataStore // <-- Add this
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rvilleda.workouttracker.ui.WorkoutTrackerApp
 import com.rvilleda.workouttracker.ui.theme.WorkoutTrackerTheme
 import com.rvilleda.workouttracker.data.database.WorkoutDatabase
 import com.rvilleda.workouttracker.model.AppTheme
 import com.rvilleda.workouttracker.ui.screens.settings.SettingsViewModel
+import com.rvilleda.workouttracker.data.repository.DashboardPreferencesRepository
 
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "dashboard_prefs")
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +35,8 @@ class MainActivity : ComponentActivity() {
         val workoutDao = db.workoutDao()
         val exerciseDao = db.exerciseDao()
         val routineDao = db.routineDao()
+
+        val dashboardPreferencesRepository = DashboardPreferencesRepository(applicationContext.dataStore)
 
         enableEdgeToEdge()
 
@@ -52,7 +59,8 @@ class MainActivity : ComponentActivity() {
                     WorkoutTrackerApp(
                         workoutDao = workoutDao,
                         exerciseDao = exerciseDao,
-                        routineDao = routineDao
+                        routineDao = routineDao,
+                        dashboardPreferencesRepository = dashboardPreferencesRepository
                     )
                 }
             }

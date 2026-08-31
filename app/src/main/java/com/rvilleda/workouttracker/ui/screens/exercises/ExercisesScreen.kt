@@ -29,7 +29,8 @@ fun ExercisesScreen(
     onConfirmSelection: (Set<Exercise>) -> Unit,
     onCreateCustomExercise: () -> Unit,
     onBack: () -> Unit,
-    viewModel: ExerciseViewModel
+    viewModel: ExerciseViewModel,
+    allowSelection: Boolean = true
 ) {
     val topBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topBarState)
@@ -113,7 +114,8 @@ fun ExercisesScreen(
                     onToggleSelection = viewModel::toggleSelection,
                     onToggleSelectionMode = viewModel::toggleSelectionMode,
                     onCreateCustomExercise = onCreateCustomExercise,
-                    onConfirmSelection = onConfirmSelection
+                    onConfirmSelection = onConfirmSelection,
+                    allowSelection = allowSelection
                 )
             }
         } else {
@@ -130,12 +132,13 @@ fun ExercisesScreen(
                     onToggleSelection = viewModel::toggleSelection,
                     onToggleSelectionMode = viewModel::toggleSelectionMode,
                     onCreateCustomExercise = onCreateCustomExercise,
-                    onConfirmSelection = onConfirmSelection
+                    onConfirmSelection = onConfirmSelection,
+                    allowSelection = allowSelection
                 )
             }
         }
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (selectedExercises.isNotEmpty() && selectionMode) {
+            if (selectedExercises.isNotEmpty() && selectionMode && allowSelection) {
                 ExtendedFloatingActionButton(
                     onClick = {onConfirmSelection(selectedExercises)},
                     modifier = Modifier
@@ -158,7 +161,8 @@ fun ExerciseList(
     onToggleSelection: (Exercise) -> Unit,
     onToggleSelectionMode: () -> Unit,
     onConfirmSelection: (Set<Exercise>) -> Unit,
-    onCreateCustomExercise: (() -> Unit)? = null
+    onCreateCustomExercise: (() -> Unit)? = null,
+    allowSelection: Boolean
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -201,11 +205,16 @@ fun ExerciseList(
                         }
                     },
                     onItemClick = {
-                        if (selectionMode) {
-                            onToggleSelection(exercise)
-                        } else {
+                        if (!allowSelection){
                             onConfirmSelection(setOf(exercise))
+                        } else {
+                            if (selectionMode) {
+                                onToggleSelection(exercise)
+                            } else {
+                                onConfirmSelection(setOf(exercise))
+                            }
                         }
+
                     }
                 )
             }
