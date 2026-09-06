@@ -20,8 +20,32 @@ data class WorkoutCountTrendDataPoint(
     val startTime: Long,
     val workoutCount: Int
 )
+
+data class ProgressSetSummary(
+    val workoutId: String,
+    val exerciseId: String,
+    val exerciseName: String,
+    val startTime: Long,
+    val reps: Int,
+    val weightKg: Double
+)
 @Dao
 interface WorkoutDao {
+
+    @Query("""
+    SELECT w.id AS workoutId, e.baseExerciseId AS exerciseId,
+           MAX(e.exerciseName) AS exerciseName, w.startTime AS startTime,
+           s.reps AS reps,
+           MAX(CASE WHEN s.weightUnit = 'LBS'
+               THEN s.weight / 2.20462 ELSE s.weight END) AS weightKg
+    FROM workout_sets s
+    INNER JOIN workout_exercises e ON s.workoutExerciseId = e.id
+    INNER JOIN completed_workouts w ON e.workoutId = w.id
+    WHERE s.isCompleted = 1 AND s.reps > 0 AND s.weight >= 0
+    GROUP BY w.id, e.baseExerciseId, s.reps
+    ORDER BY w.startTime ASC, w.id ASC, e.baseExerciseId ASC, s.reps ASC
+""")
+    fun getProgressSetSummaries(): Flow<List<ProgressSetSummary>>
     @Query(
         """
         SELECT s.*

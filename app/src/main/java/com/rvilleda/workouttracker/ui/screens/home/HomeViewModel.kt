@@ -21,6 +21,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import com.rvilleda.workouttracker.model.allDefaultExercises
+import android.content.Context
+import com.rvilleda.workouttracker.ui.screens.home.components.ProgressGoalRepository
+import com.rvilleda.workouttracker.ui.screens.home.components.ProgressRecord
+import com.rvilleda.workouttracker.ui.screens.home.components.buildProgressRecords
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.collect
 
 enum class TimeRange(val displayName: String) {
     DAY("Day"),
@@ -74,6 +82,12 @@ class HomeViewModel(
     val selectedTimeRange = MutableStateFlow(TimeRange.MONTH)
     private val currentUnit = MutableStateFlow(WeightUnit.LBS)
     private val startDateMillis = MutableStateFlow(0L)
+
+    private var progressGoalRepository: ProgressGoalRepository? = null
+    private val _weeklyGoal = MutableStateFlow(3)
+    val weeklyGoal: StateFlow<Int> = _weeklyGoal
+    private val _progressError = MutableStateFlow<String?>(null)
+    val progressError: StateFlow<String?> = _progressError
 
     val trendExercisePreference = preferencesRepository.selectedTrendExercise
         .stateIn(
@@ -178,6 +192,41 @@ class HomeViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = 0.0
     )
+
+    // Called once by the tab; retains only the application context through the repository.
+    fun initializeProgress(context: Context) {
+        if (progressGoalRepository != null) return
+        val repository = ProgressGoalRepository(context.applicationContext)
+        progressGoalRepository = repository
+        viewModelScope.launch {
+            repository.weeklyGoal.collect { _weeklyGoal.value = it }
+        }
+    }
+
+    fun updateWeeklyGoal(goal: Int) {
+        val repository = progressGoalRepository ?: return
+        viewModelScope.launch {
+            try {
+                repository.saveWeeklyGoal(goal)
+                _progressError.value = null
+            } catch (error: java.io.IOException) {
+                _progressError.value = "Couldn't save your weekly goal. Please try again."
+            }
+        }
+    }
+
+    private val allProgressRecords = workoutDao.getProgressSetSummaries()
+        .map(::buildProgressRecords)
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val recentRecords: StateFlow<List<ProgressRecord>> = combine(
+        allProgressRecords, startDateMillis
+    ) { records, start ->
+        val now = System.currentTimeMillis()
+        records.filter { it.startTime in start..now }.take(5)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
 
     fun updateExerciseTrend(exerciseId: String, exerciseName: String) {
         viewModelScope.launch {

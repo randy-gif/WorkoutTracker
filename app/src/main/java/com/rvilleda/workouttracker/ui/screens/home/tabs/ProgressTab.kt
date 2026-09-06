@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,6 +47,8 @@ import com.patrykandpatrick.vico.compose.axis.axisLabelComponent
 import com.patrykandpatrick.vico.core.axis.AxisItemPlacer
 import com.patrykandpatrick.vico.core.entry.FloatEntry
 import com.rvilleda.workouttracker.ui.screens.home.TimeRange
+import com.rvilleda.workouttracker.ui.screens.home.components.RecentRecordsCard
+import com.rvilleda.workouttracker.ui.screens.home.components.WorkoutCalendarCard
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -65,7 +70,18 @@ fun ProgressTab(
 
     // 1. Collect the newly created flows from the ViewModel
     val oneRepMaxTrend by viewModel.oneRMTrend.collectAsState(emptyList())
-    val workoutCountTrend by viewModel.workoutCountTrend.collectAsState(emptyList())
+    val savedWorkouts by viewModel.savedWorkouts.collectAsState()
+    val weeklyGoal by viewModel.weeklyGoal.collectAsState()
+    val recentRecords by viewModel.recentRecords.collectAsState()
+    val progressError by viewModel.progressError.collectAsState()
+    val context = LocalContext.current.applicationContext
+    val now by produceState(initialValue = System.currentTimeMillis()) {
+        while (true) {
+            value = System.currentTimeMillis()
+            delay(30_000)
+        }
+    }
+    LaunchedEffect(viewModel, context) { viewModel.initializeProgress(context) }
 
     LaunchedEffect(globalUnit) {
         viewModel.updateUnitPreference(globalUnit)
@@ -105,7 +121,6 @@ fun ProgressTab(
     }
 
     val formattedVolume = viewModel.formatVolume(totalVolume)
-    val consistencyMarker = rememberMarker()
     val trendMarker = rememberMarker(unitLabel = globalUnit.name)
 
     // 3. Dynamic Date Formatter based on Time Range
@@ -140,7 +155,7 @@ fun ProgressTab(
 
                 Box {
                     TextButton(onClick = { isTimeRangeDropdownExpanded = true }) {
-                        Text(text = selectedTimeRange.displayName)
+                        Text(text = selectedTimeRange.progressLabel())
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = "Select Time Range"
@@ -153,7 +168,7 @@ fun ProgressTab(
                     ) {
                         TimeRange.values().forEach { range ->
                             DropdownMenuItem(
-                                text = { Text(range.displayName) },
+                                text = { Text(range.progressLabel()) },
                                 onClick = {
                                     selectedTimeRange = range
                                     isTimeRangeDropdownExpanded = false
@@ -171,7 +186,7 @@ fun ProgressTab(
                 StatCard(
                     title = "Workouts",
                     value = workoutsCount.toString(),
-                    subtitle = "This ${selectedTimeRange.displayName}",
+                    subtitle = selectedTimeRange.progressLabel(),
                     modifier = Modifier.weight(1f)
                 )
 
@@ -185,89 +200,16 @@ fun ProgressTab(
         }
 
         item {
-            Text(
-                text = "Consistency",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 12.dp)
+            WorkoutCalendarCard(
+                workouts = savedWorkouts,
+                weeklyGoal = weeklyGoal,
+                onGoalChange = viewModel::updateWeeklyGoal,
+                now = now,
+                longRange = selectedTimeRange in listOf(TimeRange.YEAR, TimeRange.FIVE_YEARS, TimeRange.ALL_TIME),
+                error = progressError
             )
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Workouts Over Time",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-
-                    // 4. Map real consistency data to Chart Model
-                    val consistencyModel = remember(workoutCountTrend) {
-                        if (workoutCountTrend.isEmpty()) null else {
-                            val entries = workoutCountTrend.mapIndexed { index, dataPoint ->
-                                FloatEntry(x = index.toFloat(), y = dataPoint.workoutCount.toFloat())
-                            }
-                            entryModelOf(entries)
-                        }
-                    }
-
-                    if (consistencyModel == null) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "No workouts recorded for this time range.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    } else {
-                        Chart(
-                            chart = columnChart(
-                                columns = listOf(
-                                    lineComponent(
-                                        color = MaterialTheme.colorScheme.primary,
-                                    )
-                                ),
-                                axisValuesOverrider = AxisValuesOverrider.fixed(minY = 0f, maxY = consistencyModel.maxY * 1.2f)
-                            ),
-                            model = consistencyModel,
-                            marker = consistencyMarker,
-                            startAxis = rememberStartAxis(
-                                label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                                itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = (consistencyModel.maxY + 1).toInt().coerceAtMost(6)),
-                                valueFormatter = { value, _ -> value.toInt().toString() }
-                            ),
-                            bottomAxis = rememberBottomAxis(
-                                label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                                // 5. Use real dates instead of "Wk 1"
-                                valueFormatter = { value, _ ->
-                                    val index = value.toInt()
-                                    val dataPoint = workoutCountTrend.getOrNull(index)
-                                    if (dataPoint != null) {
-                                        dateFormatter.format(Date(dataPoint.startTime))
-                                    } else {
-                                        ""
-                                    }
-                                }
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
-                        )
-                    }
-                }
-            }
         }
+        item { RecentRecordsCard(recentRecords, globalUnit) }
 
         item {
             Text(
@@ -473,3 +415,13 @@ fun rememberMarker(unitLabel: String = ""): Marker {
         }
     }
 }
+
+private fun TimeRange.progressLabel(): String = when (this) {
+    TimeRange.DAY -> "Past day"
+    TimeRange.WEEK -> "Past week"
+    TimeRange.MONTH -> "Past month"
+    TimeRange.YEAR -> "Past year"
+    TimeRange.FIVE_YEARS -> "Past 5 years"
+    TimeRange.ALL_TIME -> "All time"
+}
+
