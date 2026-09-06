@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rvilleda.workouttracker.model.ExerciseInSession
 import com.rvilleda.workouttracker.model.ExerciseSet
+import com.rvilleda.workouttracker.data.database.entity.WorkoutSetEntity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -32,7 +33,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.ui.res.painterResource
 import com.rvilleda.workouttracker.R
 import com.rvilleda.workouttracker.model.WeightUnit
-import androidx.compose.foundation.lazy.rememberLazyListState
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.material.icons.filled.Menu
@@ -51,6 +51,7 @@ fun ActiveWorkoutScreen(
     viewModel: ActiveWorkoutViewModel = viewModel()
 ) {
     val activeExercises by viewModel.activeExercises.collectAsState()
+    val setHistory by viewModel.setHistory.collectAsState()
     val timerText by viewModel.elapsedTime.collectAsState()
 
     val restTime by viewModel.restTimeRemaining.collectAsState()
@@ -160,18 +161,18 @@ fun ActiveWorkoutScreen(
             )
         },
         bottomBar = {
-                AnimatedVisibility(
-                    visible = restTime > 0,
-                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-                ) {
-                    RestTimerBanner(
-                        timeRemaining = restTime,
-                        onSkip = { viewModel.skipRestTimer() },
-                        onAdd30s = { viewModel.addRestTime(30) },
-                        onSubtract30s = { viewModel.subtractRestTime(30) }
-                    )
-                }
+            AnimatedVisibility(
+                visible = restTime > 0,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
+                RestTimerBanner(
+                    timeRemaining = restTime,
+                    onSkip = { viewModel.skipRestTimer() },
+                    onAdd30s = { viewModel.addRestTime(30) },
+                    onSubtract30s = { viewModel.subtractRestTime(30) }
+                )
+            }
         }
     ) { padding ->
         LazyColumn(
@@ -185,6 +186,7 @@ fun ActiveWorkoutScreen(
                 ReorderableItem(reorderState, key = exercise.id) { isDragging ->
                     ActiveExerciseCard(
                         exercise = exercise,
+                        setHistory = setHistory,
                         isDragging = isDragging,
                         dragModifier = Modifier.draggableHandle(),
                         onDeleteExercise = { viewModel.removeExerciseFromSession(exercise.id) },
@@ -290,6 +292,7 @@ fun ActiveExerciseCard(
     onToggleComplete: (String) -> Unit,
     onToggleAutoRest: () -> Unit,
     onUpdateRestTime: (Int) -> Unit,
+    setHistory: Map<String, WorkoutSetEntity> = emptyMap(),
 ) {
 
     var menuExpanded by remember { mutableStateOf(false) }
@@ -514,6 +517,8 @@ fun ActiveExerciseCard(
                 SetInputRow(
                     setNumber = index + 1,
                     set = set,
+                    weightPlaceholder = setHistory[set.id]?.weightTextIn(set.weightUnit) ?: "0",
+                    repsPlaceholder = setHistory[set.id]?.reps?.toString() ?: "0",
                     onWeightChange = { weight -> onUpdateSetWeight(set.id, weight) },
                     onRepsChange = { reps -> onUpdateSetReps(set.id, reps) },
                     onDelete = { onRemoveSet(set.id) },
@@ -540,10 +545,25 @@ fun SetInputRow(
     onWeightChange: (String) -> Unit,
     onRepsChange: (String) -> Unit,
     onDelete: () -> Unit,
-    onToggleComplete: () -> Unit
+    onToggleComplete: () -> Unit,
+    weightPlaceholder: String = "0",
+    repsPlaceholder: String = "0"
 ) {
-    // Uses Material 3 thematic colors instead of harsh raw colors
-    val rowColor = if (set.isCompleted) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else Color.Transparent
+    val rowColor = if (set.isCompleted) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+    } else {
+        Color.Transparent
+    }
+
+    val placeholderColor =
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+
+    val inputColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+        focusedPlaceholderColor = placeholderColor,
+        unfocusedPlaceholderColor = placeholderColor
+    )
 
     Row(
         modifier = Modifier
@@ -553,7 +573,6 @@ fun SetInputRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Set Number
         Text(
             text = "$setNumber",
             modifier = Modifier.width(24.dp),
@@ -561,31 +580,50 @@ fun SetInputRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Weight Input (Pill Style)
         OutlinedTextField(
             value = set.weight,
             onValueChange = onWeightChange,
-            placeholder = { Text("0", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            placeholder = {
+                Text(
+                    text = weightPlaceholder,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            },
+            colors = inputColors,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number
+            ),
             singleLine = true,
             shape = RoundedCornerShape(8.dp),
-            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+            textStyle = LocalTextStyle.current.copy(
+                textAlign = TextAlign.Center
+            ),
             modifier = Modifier.weight(1f)
         )
 
-        // Reps Input (Pill Style)
         OutlinedTextField(
             value = set.reps,
             onValueChange = onRepsChange,
-            placeholder = { Text("0", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            placeholder = {
+                Text(
+                    text = repsPlaceholder,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            },
+            colors = inputColors,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number
+            ),
             singleLine = true,
             shape = RoundedCornerShape(8.dp),
-            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+            textStyle = LocalTextStyle.current.copy(
+                textAlign = TextAlign.Center
+            ),
             modifier = Modifier.weight(1f)
         )
 
-        // Checkmark Button (Filled when completed)
         IconButton(
             onClick = onToggleComplete,
             modifier = Modifier.size(32.dp)
@@ -594,7 +632,11 @@ fun SetInputRow(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        color = if (set.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        color = if (set.isCompleted) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
                         shape = RoundedCornerShape(8.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -602,13 +644,16 @@ fun SetInputRow(
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = "Complete Set",
-                    tint = if (set.isCompleted) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if (set.isCompleted) {
+                        MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     modifier = Modifier.size(20.dp)
                 )
             }
         }
 
-        // Delete Button (Slightly smaller and faded to reduce visual weight)
         IconButton(
             onClick = onDelete,
             modifier = Modifier.size(32.dp)

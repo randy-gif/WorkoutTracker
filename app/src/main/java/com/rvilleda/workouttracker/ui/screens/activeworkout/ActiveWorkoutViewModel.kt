@@ -22,6 +22,17 @@ import kotlinx.coroutines.Job
 import kotlin.math.roundToInt
 
 
+// Shared by the placeholder UI and completion so the saved value matches the hint.
+fun WorkoutSetEntity.weightTextIn(unit: WeightUnit): String {
+    val converted = when {
+        weightUnit == unit -> weight
+        unit == WeightUnit.KG -> weight / 2.20462f
+        else -> weight * 2.20462f
+    }
+    val rounded = (converted * 10f).roundToInt() / 10f
+    return if (rounded % 1f == 0f) rounded.toInt().toString() else rounded.toString()
+}
+
 class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val routineDao: RoutineDao) : ViewModel() {
 
     private val _activeExercises = MutableStateFlow<List<ExerciseInSession>>(emptyList())
@@ -39,6 +50,23 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
 
     private var currentRoutineId: String? = null
 
+    // Suggestions are separate from entered values and are never saved as performed sets.
+    private val _setHistory = MutableStateFlow<Map<String, WorkoutSetEntity>>(emptyMap())
+    val setHistory: StateFlow<Map<String, WorkoutSetEntity>> = _setHistory.asStateFlow()
+    private val historyJobs = mutableMapOf<String, Job>()
+
+    private fun loadActiveSetHistory() {
+        historyJobs.values.forEach { it.cancel() }
+        historyJobs.clear()
+        _setHistory.value = emptyMap()
+        _activeExercises.value.forEach { exercise ->
+            exercise.sets.forEachIndexed { index, set ->
+                loadSetHistory(exercise.id, exercise.baseExerciseId, set, index + 1)
+            }
+        }
+    }
+
+
     init {
         startTimer()
         checkForActiveWorkoutCache()
@@ -53,6 +81,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 _activeExercises.value = cache.exercises
 
                 _isWorkoutActive.value = true
+                loadActiveSetHistory()
             }
         }
     }
@@ -126,6 +155,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
         _activeExercises.value = freshExercises
         _isWorkoutActive.value = true
         startTime = System.currentTimeMillis()
+        loadActiveSetHistory()
     }
 
     fun startWorkoutFromRoutine(routineId: String) {
@@ -149,6 +179,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                 }
                 startTime = System.currentTimeMillis()
                 _isWorkoutActive.value = true
+                loadActiveSetHistory()
                 autoSaveCache()
             }
         }
@@ -188,35 +219,63 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
         exerciseName: String,
         defaultUnit: WeightUnit,
     ) {
-        _activeExercises.update { currentExercises ->
-            currentExercises + ExerciseInSession(
-                baseExerciseId = baseExerciseId,
-                exerciseName = exerciseName,
-                sets = listOf(
-                    ExerciseSet(
-                        weightUnit = defaultUnit
-                    )
-                )
-            )
-        }
+        val firstSet = ExerciseSet(weightUnit = defaultUnit)
+        val exercise = ExerciseInSession(
+            baseExerciseId = baseExerciseId,
+            exerciseName = exerciseName,
+            sets = listOf(firstSet)
+        )
+        _activeExercises.update { it + exercise }
         autoSaveCache()
+        loadSetHistory(exercise.id, baseExerciseId, firstSet, 1)
     }
 
     fun addSetToExercise(exerciseId: String, defaultUnit: WeightUnit) {
-
-        val updatedExercises = _activeExercises.value.map { exercise ->
-            if (exercise.id == exerciseId) {
-                val newSet = ExerciseSet(
-                    id = UUID.randomUUID().toString(),
-                    weight = "",
-                    reps = "",
-                    weightUnit = defaultUnit
-                )
-                exercise.copy(sets = exercise.sets + newSet)
-            } else exercise
+        val exercise = _activeExercises.value.firstOrNull { it.id == exerciseId } ?: return
+        val newSet = ExerciseSet(
+            id = UUID.randomUUID().toString(),
+            weight = "",
+            reps = "",
+            weightUnit = exercise.sets.lastOrNull()?.weightUnit ?: defaultUnit,
+            isCompleted = false
+        )
+        val setNumber = exercise.sets.size + 1
+        _activeExercises.update { exercises ->
+            exercises.map {
+                if (it.id == exerciseId) it.copy(sets = it.sets + newSet) else it
+            }
         }
-        _activeExercises.value = updatedExercises
         autoSaveCache()
+        loadSetHistory(exerciseId, exercise.baseExerciseId, newSet, setNumber)
+    }
+
+    private fun loadSetHistory(
+        exerciseId: String,
+        baseExerciseId: String,
+        originalSet: ExerciseSet,
+        setNumber: Int
+    ) {
+        val workoutStart = startTime
+        historyJobs[originalSet.id] = viewModelScope.launch {
+            val previousSets = try {
+                workoutDao.getLastCompletedSetsForExercise(baseExerciseId, workoutStart)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                android.util.Log.w("ActiveWorkoutViewModel", "Could not load previous sets", error)
+                return@launch
+            }
+            if (!_isWorkoutActive.value || startTime != workoutStart) return@launch
+            val exists = _activeExercises.value.any { exercise ->
+                exercise.id == exerciseId && exercise.sets.any { it.id == originalSet.id }
+            }
+            if (!exists) return@launch
+
+            val previousSet = previousSets.firstOrNull { it.setNumber == setNumber }
+                ?: previousSets.lastOrNull()?.takeIf { setNumber > it.setNumber }
+                ?: return@launch
+            _setHistory.update { it + (originalSet.id to previousSet) }
+        }
     }
 
     fun updateSet(workoutExerciseId: String, setId: String, weight: String = "", reps: String = "", isCompleted: Boolean = false, weightUnit: WeightUnit = WeightUnit.LBS) {
@@ -289,7 +348,7 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
                                 roundedWeight.toString()
                             }
 
-                            set.copy(weightUnit = unit, weight = weightString)
+                            set.copy(weightUnit = unit, weight = if (set.weight.isBlank()) "" else weightString)
                         } else {
                             set
                         }
@@ -380,25 +439,39 @@ class ActiveWorkoutViewModel(private val workoutDao: WorkoutDao, private val rou
 
     // 4. COMPLETE SET & TRIGGER TIMER
     fun toggleSetCompletion(exerciseId: String, setId: String) {
-        val updatedExercises = _activeExercises.value.map { exercise ->
-            if (exercise.id == exerciseId) {
-                val updatedSets = exercise.sets.map { set ->
-                    if (set.id == setId) {
-                        val newCompletionStatus = !set.isCompleted
-
-                        // IF IT WAS JUST COMPLETED, START THE REST TIMER!
-                        if (newCompletionStatus && exercise.autoRestEnabled) {
-                            startRestTimer(exercise.restTimeSeconds)
-                        }
-
-                        set.copy(isCompleted = newCompletionStatus)
-                    } else set
+        val workoutStart = startTime
+        viewModelScope.launch {
+            // A quick tap after Add Set still uses the history being loaded.
+            historyJobs[setId]?.join()
+            if (!_isWorkoutActive.value || startTime != workoutStart) return@launch
+            val exercise = _activeExercises.value.firstOrNull { it.id == exerciseId }
+                ?: return@launch
+            val set = exercise.sets.firstOrNull { it.id == setId } ?: return@launch
+            val completing = !set.isCompleted
+            val previous = _setHistory.value[setId]
+            val updatedSet = set.copy(
+                weight = if (completing && set.weight.isBlank()) {
+                    previous?.weightTextIn(set.weightUnit) ?: set.weight
+                } else set.weight,
+                reps = if (completing && set.reps.isBlank()) {
+                    previous?.reps?.toString() ?: set.reps
+                } else set.reps,
+                isCompleted = completing
+            )
+            _activeExercises.update { exercises ->
+                exercises.map { current ->
+                    if (current.id == exerciseId) {
+                        current.copy(sets = current.sets.map {
+                            if (it.id == setId) updatedSet else it
+                        })
+                    } else current
                 }
-                exercise.copy(sets = updatedSets)
-            } else exercise
+            }
+            if (completing && exercise.autoRestEnabled) {
+                startRestTimer(exercise.restTimeSeconds)
+            }
+            autoSaveCache()
         }
-        _activeExercises.value = updatedExercises
-        autoSaveCache()
     }
 
     fun toggleAutoRest(exerciseId: String) {

@@ -22,6 +22,33 @@ data class WorkoutCountTrendDataPoint(
 )
 @Dao
 interface WorkoutDao {
+    @Query(
+        """
+        SELECT s.*
+        FROM workout_sets s
+        WHERE s.workoutExerciseId = (
+            SELECT e.id
+            FROM workout_exercises e
+            INNER JOIN completed_workouts w ON e.workoutId = w.id
+            WHERE e.baseExerciseId = :baseExerciseId
+              AND w.dateCompleted <= :beforeTime
+              AND EXISTS (
+                  SELECT 1 FROM workout_sets completedSet
+                  WHERE completedSet.workoutExerciseId = e.id
+                    AND completedSet.isCompleted = 1
+              )
+            ORDER BY w.dateCompleted DESC, w.id DESC, e.orderInWorkout DESC, e.id DESC
+            LIMIT 1
+        )
+          AND s.isCompleted = 1
+        ORDER BY s.setNumber ASC
+        """
+    )
+    suspend fun getLastCompletedSetsForExercise(
+        baseExerciseId: String,
+        beforeTime: Long
+    ): List<WorkoutSetEntity>
+
     @Insert
     suspend fun insertWorkout(workout: CompletedWorkoutEntity)
 
