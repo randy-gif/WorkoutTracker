@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    coachViewModel: CoachViewModel,
     onStartRoutineClick: (String) -> Unit,
     onEditRoutineClick: (String) -> Unit,
     onCreateRoutineClick: () -> Unit,
@@ -105,7 +106,7 @@ fun HomeScreen(
                     HomeTopTabs.DASHBOARD -> DashboardTab()
                     HomeTopTabs.ROUTINES -> RoutinesTab(onCreateRoutineClick, onStartRoutineClick, onEditRoutineClick, viewModel)
                     HomeTopTabs.PROGRESS -> ProgressTab(globalUnit, onChangeExerciseTrend, onNavigateToHistory, viewModel)
-                    HomeTopTabs.AI_COACH -> AICoach()
+                    HomeTopTabs.AI_COACH -> AICoach(coachViewModel, globalUnit)
                 }
             }
 

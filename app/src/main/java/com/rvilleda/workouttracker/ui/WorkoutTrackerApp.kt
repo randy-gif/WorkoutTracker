@@ -1,6 +1,9 @@
 package com.rvilleda.workouttracker.ui
 
 import CreateCustomExerciseScreen
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
+import com.rvilleda.workouttracker.ui.screens.home.CoachViewModel
 import com.rvilleda.workouttracker.model.ExerciseTrendSlot
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -171,7 +174,17 @@ fun WorkoutTrackerApp(
                                     }
                                 )
 
+                                val application = LocalContext.current.applicationContext as Application
+                                val coachViewModel: CoachViewModel = viewModel(
+                                    factory = object : ViewModelProvider.Factory {
+                                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                            @Suppress("UNCHECKED_CAST")
+                                            return CoachViewModel(application, workoutDao) as T
+                                        }
+                                    }
+                                )
                                 HomeScreen(
+                                    coachViewModel = coachViewModel,
                                     viewModel = homeViewModel,
                                     onNavigateToHistory = { currentDestination = AppDestinations.HISTORY },
                                     onCreateRoutineClick = { navController.navigate("create_routine_screen")},
