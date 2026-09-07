@@ -5,8 +5,12 @@ import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
+import com.google.ai.edge.litertlm.MessageCallback
 import com.google.ai.edge.litertlm.SamplerConfig
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -25,14 +29,28 @@ class LocalCoachEngine {
             currentCoroutineContext().ensureActive()
             it.createConversation(ConversationConfig(samplerConfig = SamplerConfig(20, 0.9, 0.2))).use { conversation ->
                 val output = StringBuilder()
+                val completion = CompletableDeferred<Unit>()
+                val requestContext = currentCoroutineContext()
+                var started = false
                 try {
-                    conversation.sendMessageAsync(Message.of(prompt)).collect { chunk ->
-                        output.append(chunk.toString())
-                        onText(visibleAnswer(output.toString()))
-                        if (output.length > 6000) conversation.cancelProcess()
-                    }
+                    conversation.sendMessageAsync(Message.of(prompt), object : MessageCallback {
+                        override fun onMessage(message: Message) {
+                            if (requestContext.isActive) {
+                                output.append(message.toString())
+                                onText(visibleAnswer(output.toString()))
+                            }
+                        }
+                        override fun onDone() { completion.complete(Unit) }
+                        override fun onError(throwable: Throwable) { completion.completeExceptionally(throwable) }
+                    })
+                    started = true
+                    completion.await()
                 } finally {
-                    conversation.cancelProcess()
+                    // Cancellation must finish before closing handles or allowing another request.
+                    if (started && !completion.isCompleted) withContext(NonCancellable) {
+                        conversation.cancelProcess()
+                        runCatching { completion.await() }
+                    }
                 }
             }
         }

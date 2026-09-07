@@ -21,10 +21,12 @@ class CoachModelStore(context: Context) {
     }
 
     suspend fun download(model: CoachModel, progress: (Float) -> Unit) = withContext(Dispatchers.IO) {
+        val partial = File(directory, "${model.filename}.part")
+        // A process killed during a download cannot run finally; reclaim its incomplete file.
+        if (partial.exists() && !partial.delete()) throw IOException("Couldn't clear an interrupted download.")
         if (directory.usableSpace < model.bytes + 300_000_000L) {
             throw IOException("Free at least ${model.sizeLabel} plus 300 MB before downloading.")
         }
-        val partial = File(directory, "${model.filename}.part")
         val connection = URL(model.downloadUrl).openConnection() as HttpURLConnection
         connection.connectTimeout = 20_000
         connection.readTimeout = 20_000

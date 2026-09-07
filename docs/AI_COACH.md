@@ -28,4 +28,4 @@ Native inference runs off the UI thread, streams responses, supports Stop, and r
 
 Run `:app:assembleDebug :app:testDebugUnitTest`. On physical ARM64 phones, test both models with known workout fixtures, airplane mode after downloading, insufficient memory/storage, interrupted downloads, Stop, rotation, model removal, GPU failure, and repeated chats. Benchmark startup, response latency, peak memory, and battery use across representative devices before adjusting eligibility thresholds. Emulator UI testing does not establish physical-device inference compatibility.
 
-The runtime requires Kotlin 2.2 metadata support, so Kotlin, KSP, and AGP were updated together. The application's minSdk remains 24; local chat is guarded separately.
+The runtime requires Kotlin 2.2 metadata support, so Kotlin, KSP, AGP, and the KSP2-compatible Room 2.7.2 were updated together. No database schema changes are introduced. The application's minSdk remains 24; local chat is guarded separately.

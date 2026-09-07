@@ -1,4 +1,3 @@
-Starting a Gradle Daemon (subsequent builds will be faster)
 
 > Configure project :app
 w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/build.gradle.kts:36:5: 'fun BaseAppModuleExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
@@ -9,9 +8,9 @@ w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/build.gradle.
 > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :app:generateDebugResValues
-> Task :app:checkDebugAarMetadata
 > Task :app:mapDebugSourceSetPaths
 > Task :app:generateDebugResources
+> Task :app:checkDebugAarMetadata
 > Task :app:mergeDebugResources
 > Task :app:packageDebugResources
 > Task :app:createDebugCompatibleScreenManifests
@@ -29,38 +28,58 @@ w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/build.gradle.
 > Task :app:desugarDebugFileDependencies
 > Task :app:mergeDebugJniLibFolders
 > Task :app:checkDebugDuplicateClasses
-> Task :app:processDebugResources
-> Task :app:l8DexDesugarLibDebug
+> Task :app:validateSigningDebug
 > Task :app:mergeDebugNativeLibs
 > Task :app:mergeLibDexDebug
-> Task :app:validateSigningDebug
 > Task :app:writeDebugAppMetadata
 > Task :app:writeDebugSigningConfigVersions
 > Task :app:preDebugUnitTestBuild UP-TO-DATE
-> Task :app:javaPreCompileDebugUnitTest
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
 
 > Task :app:stripDebugDebugSymbols
 Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, liblitertlm_jni.so. Run with --info option to learn more.
 
+> Task :app:processDebugResources
+> Task :app:l8DexDesugarLibDebug
 > Task :app:mergeExtDexDebug
 
-> Task :app:kspDebugKotlin FAILED
-e: [ksp] java.lang.IllegalStateException: unexpected jvm signature V
+> Task :app:kspDebugKotlin
+w: [ksp] C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/data/database/dao/WorkoutDao.kt:119: The return value includes a data class with a @Relation. It is usually desired to annotate this function with @Transaction to avoid possibility of inconsistent results between the data class and its relations. See https://developer.android.com/reference/androidx/room/Transaction.html for details.
+
+> Task :app:compileDebugKotlin
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/data/database/WorkoutDatabase.kt:55:22 'fun fallbackToDestructiveMigration(): RoomDatabase.Builder<WorkoutDatabase>' is deprecated. Replace by overloaded version with parameter to indicate if all tables should be dropped or not.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/WorkoutTrackerApp.kt:80:71 Unchecked cast of 'ActiveWorkoutViewModel' to 'T (of fun <T : ViewModel> create)'.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/WorkoutTrackerApp.kt:172:51 Unchecked cast of 'HomeViewModel' to 'T (of fun <T : ViewModel> create)'.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/WorkoutTrackerApp.kt:213:83 Unchecked cast of 'ExerciseViewModel' to 'T (of fun <T : ViewModel> create)'.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/WorkoutTrackerApp.kt:248:81 Unchecked cast of 'HistoryViewModel' to 'T (of fun <T : ViewModel> create)'.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/WorkoutTrackerApp.kt:338:63 Unchecked cast of 'ExerciseViewModel' to 'T (of fun <T : ViewModel> create)'.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/WorkoutTrackerApp.kt:352:27 Unchecked cast of 'HomeViewModel' to 'T (of fun <T : ViewModel> create)'.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/WorkoutTrackerApp.kt:375:67 Unchecked cast of 'CreateRoutineViewModel' to 'T (of fun <T : ViewModel> create)'.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/WorkoutTrackerApp.kt:398:63 Unchecked cast of 'ExerciseViewModel' to 'T (of fun <T : ViewModel> create)'.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/WorkoutTrackerApp.kt:410:67 Unchecked cast of 'CreateRoutineViewModel' to 'T (of fun <T : ViewModel> create)'.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/WorkoutTrackerApp.kt:454:63 Unchecked cast of 'ExerciseViewModel' to 'T (of fun <T : ViewModel> create)'.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/WorkoutTrackerApp.kt:478:68 Unchecked cast of 'WorkoutDetailsViewModel' to 'T (of fun <T : ViewModel> create)'.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/screens/createcustomexercise/CreateCustomExerciseScreen.kt:40:44 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/screens/home/HomeViewModel.kt:138:7 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/app/src/main/java/com/rvilleda/workouttracker/ui/screens/workoutdetails/WorkoutDetailsScreen.kt:40:60 Unchecked cast of 'WorkoutDetailsViewModel' to 'T (of fun <T : ViewModel> create)'.
+
+> Task :app:compileDebugJavaWithJavac
+> Task :app:processDebugJavaRes
+> Task :app:mergeDebugJavaResource
+> Task :app:dexBuilderDebug
+> Task :app:mergeProjectDexDebug
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
+> Task :app:kspDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes
+> Task :app:testDebugUnitTest
 
 [Incubating] Problems report is available at: file:///C:/Users/ville/AndroidStudioProjects/WorkoutTracker/build/reports/problems/problems-report.html
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:kspDebugKotlin'.
-> A failure occurred while executing com.google.devtools.ksp.gradle.KspAAWorkerAction
-   > unexpected jvm signature V
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to generate a Build Scan (Powered by Develocity).
-> Get more help at https://help.gradle.org.
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
 
@@ -68,5 +87,6 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.1.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 5m 31s
-30 actionable tasks: 30 executed
+BUILD SUCCESSFUL in 3m 58s
+44 actionable tasks: 43 executed, 1 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.1.0/userguide/configuration_cache_enabling.html
