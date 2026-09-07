@@ -58,6 +58,7 @@ import java.util.Date
 fun ProgressTab(
     globalUnit: WeightUnit,
     onChangeExerciseTrend: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     viewModel: HomeViewModel
 ) {
     var selectedTimeRange by remember { mutableStateOf(TimeRange.MONTH) }
@@ -71,9 +72,7 @@ fun ProgressTab(
     // 1. Collect the newly created flows from the ViewModel
     val oneRepMaxTrend by viewModel.oneRMTrend.collectAsState(emptyList())
     val savedWorkouts by viewModel.savedWorkouts.collectAsState()
-    val weeklyGoal by viewModel.weeklyGoal.collectAsState()
     val recentRecords by viewModel.recentRecords.collectAsState()
-    val progressError by viewModel.progressError.collectAsState()
     val context = LocalContext.current.applicationContext
     val now by produceState(initialValue = System.currentTimeMillis()) {
         while (true) {
@@ -202,11 +201,8 @@ fun ProgressTab(
         item {
             WorkoutCalendarCard(
                 workouts = savedWorkouts,
-                weeklyGoal = weeklyGoal,
-                onGoalChange = viewModel::updateWeeklyGoal,
                 now = now,
-                longRange = selectedTimeRange in listOf(TimeRange.YEAR, TimeRange.FIVE_YEARS, TimeRange.ALL_TIME),
-                error = progressError
+                onClick = onNavigateToHistory
             )
         }
         item { RecentRecordsCard(recentRecords, globalUnit) }

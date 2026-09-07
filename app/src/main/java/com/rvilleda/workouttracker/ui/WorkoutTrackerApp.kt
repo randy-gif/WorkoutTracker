@@ -172,6 +172,7 @@ fun WorkoutTrackerApp(
 
                                 HomeScreen(
                                     viewModel = homeViewModel,
+                                    onNavigateToHistory = { currentDestination = AppDestinations.HISTORY },
                                     onCreateRoutineClick = { navController.navigate("create_routine_screen")},
                                     onStartRoutineClick = { routineId ->
                                         if (!isWorkoutActive) {

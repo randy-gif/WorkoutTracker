@@ -2,7 +2,7 @@ package com.rvilleda.workouttracker.ui.screens.history
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import com.rvilleda.workouttracker.ui.screens.history.components.WorkoutCalendar
+import com.rvilleda.workouttracker.ui.components.WorkoutCalendar
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import java.time.YearMonth
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +40,8 @@ fun HistoryScreen(
     val selectedDate by viewModel.selectedDate.collectAsState()
     val dailyWorkouts by viewModel.dailyWorkouts.collectAsState()
 
+    var displayedMonth by rememberSaveable { mutableStateOf(YearMonth.from(selectedDate).toString()) }
+
     // Format the date to look nice (e.g., "May 8, 2026")
     val dateFormatter = remember { DateTimeFormatter.ofPattern("MMMM d, yyyy") }
 
@@ -44,6 +50,9 @@ fun HistoryScreen(
 
             WorkoutCalendar(
                 workoutDates = workoutDates,
+                month = YearMonth.parse(displayedMonth),
+                selectedDate = selectedDate,
+                onMonthChange = { displayedMonth = it.toString() },
                 onDateSelected = { date ->
                     // Tell the ViewModel to update the selected date!
                     viewModel.updateSelectedDate(date)
