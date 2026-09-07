@@ -11,7 +11,6 @@ import com.rvilleda.workouttracker.data.database.entity.FullRoutine
 import com.rvilleda.workouttracker.data.repository.DashboardPreferencesRepository
 import com.rvilleda.workouttracker.model.WeightUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
-import com.rvilleda.workouttracker.model.allDefaultExercises
+import com.rvilleda.workouttracker.model.ExerciseTrendSlot
 import android.content.Context
 import com.rvilleda.workouttracker.ui.screens.home.components.ProgressGoalRepository
 import com.rvilleda.workouttracker.ui.screens.home.components.ProgressRecord
@@ -89,36 +88,17 @@ class HomeViewModel(
     private val _progressError = MutableStateFlow<String?>(null)
     val progressError: StateFlow<String?> = _progressError
 
-    val trendExercisePreference = preferencesRepository.selectedTrendExercise
-        .stateIn(
+    val trendExercisePreferences = ExerciseTrendSlot.entries.associateWith { slot ->
+        preferencesRepository.selectedTrendExercise(slot).stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = Pair(null, "Bench Press")
+            initialValue = slot.defaultExercise.let { it.id to it.name }
         )
-
-    init {
-        viewModelScope.launch {
-            val currentPref = preferencesRepository.selectedTrendExercise.first()
-            val currentId = currentPref.first
-
-            if (currentId == null) {
-                val benchPress = allDefaultExercises.find {
-                    it.name.contains("Bench Press", ignoreCase = true)
-                } ?: allDefaultExercises.firstOrNull()
-
-                if (benchPress != null) {
-                    preferencesRepository.saveTrendExercisePreference(
-                        exerciseId = benchPress.id,
-                        exerciseName = benchPress.name
-                    )
-                }
-            }
-        }
     }
     @OptIn(ExperimentalCoroutinesApi::class)
-    val oneRMTrend: StateFlow<List<OneRMTrendDataPoint>> = combine(
+    private fun oneRMTrend(slot: ExerciseTrendSlot): StateFlow<List<OneRMTrendDataPoint>> = combine(
         currentUnit,
-        trendExercisePreference,
+        trendExercisePreferences.getValue(slot),
         startDateMillis,
         selectedTimeRange
     ) { unit, preferencePair, startDate, timeRange ->
@@ -148,6 +128,8 @@ class HomeViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
+    val oneRMTrends = ExerciseTrendSlot.entries.associateWith { oneRMTrend(it) }
+
     val workoutCountTrend: StateFlow<List<WorkoutCountTrendDataPoint>> = combine(
         selectedTimeRange, // e.g., TimeRange enum (DAY, WEEK, MONTH, YEAR, FIVE_YEARS, ALL)
         startDateMillis
@@ -228,9 +210,9 @@ class HomeViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
-    fun updateExerciseTrend(exerciseId: String, exerciseName: String) {
+    fun updateExerciseTrend(slot: ExerciseTrendSlot, exerciseId: String, exerciseName: String) {
         viewModelScope.launch {
-            preferencesRepository.saveTrendExercisePreference(exerciseId, exerciseName)
+            preferencesRepository.saveTrendExercisePreference(slot, exerciseId, exerciseName)
         }
     }
 

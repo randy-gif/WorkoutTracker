@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import com.rvilleda.workouttracker.R
+import com.rvilleda.workouttracker.model.ExerciseTrendSlot
 import com.rvilleda.workouttracker.model.WeightUnit
 import com.rvilleda.workouttracker.ui.screens.home.components.TabRowHeader
 import com.rvilleda.workouttracker.ui.screens.home.components.HomeTopTabs
@@ -38,7 +39,7 @@ fun HomeScreen(
     onStartRoutineClick: (String) -> Unit,
     onEditRoutineClick: (String) -> Unit,
     onCreateRoutineClick: () -> Unit,
-    onChangeExerciseTrend: () -> Unit,
+    onChangeExerciseTrend: (ExerciseTrendSlot) -> Unit,
     onNavigateToHistory: () -> Unit,
     globalUnit: WeightUnit
 ) {

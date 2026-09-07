@@ -4,28 +4,29 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.rvilleda.workouttracker.model.ExerciseTrendSlot
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 class DashboardPreferencesRepository(private val dataStore: DataStore<Preferences>) {
+    fun selectedTrendExercise(slot: ExerciseTrendSlot): Flow<Pair<String, String>> =
+        dataStore.data.map { prefs ->
+            val default = slot.defaultExercise
+            val id = prefs[stringPreferencesKey("${slot.preferencePrefix}_id")]
+            if (id == null) default.id to default.name
+            else id to (prefs[stringPreferencesKey("${slot.preferencePrefix}_name")] ?: default.name)
+        }.distinctUntilChanged()
 
-    private companion object {
-        val TREND_EXERCISE_ID = stringPreferencesKey("trend_exercise_id")
-        val TREND_EXERCISE_NAME = stringPreferencesKey("trend_exercise_name")
-    }
-
-    // Expose a Pair holding the ID and Name.
-    // If no preference exists, it returns null for the ID and "Bench Press" for the name.
-    val selectedTrendExercise: Flow<Pair<String?, String>> = dataStore.data.map { prefs ->
-        val id = prefs[TREND_EXERCISE_ID]
-        val name = prefs[TREND_EXERCISE_NAME] ?: "Bench Press"
-        Pair(id, name)
-    }
-
-    suspend fun saveTrendExercisePreference(exerciseId: String, exerciseName: String) {
+    suspend fun saveTrendExercisePreference(
+        slot: ExerciseTrendSlot,
+        exerciseId: String,
+        exerciseName: String
+    ) {
         dataStore.edit { prefs ->
-            prefs[TREND_EXERCISE_ID] = exerciseId
-            prefs[TREND_EXERCISE_NAME] = exerciseName
+            // BENCH retains the original keys so existing selections survive the upgrade.
+            prefs[stringPreferencesKey("${slot.preferencePrefix}_id")] = exerciseId
+            prefs[stringPreferencesKey("${slot.preferencePrefix}_name")] = exerciseName
         }
     }
 }

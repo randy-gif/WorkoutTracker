@@ -1,6 +1,7 @@
 package com.rvilleda.workouttracker.ui
 
 import CreateCustomExerciseScreen
+import com.rvilleda.workouttracker.model.ExerciseTrendSlot
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -185,8 +186,8 @@ fun WorkoutTrackerApp(
                                     onEditRoutineClick = { routineId ->
                                         navController.navigate("edit_routine_screen")
                                     },
-                                    onChangeExerciseTrend = {
-                                        navController.navigate("change_exercise_trend")
+                                    onChangeExerciseTrend = { slot ->
+                                        navController.navigate("change_exercise_trend/${slot.name}")
                                     },
                                     globalUnit = globalUnit
                                 )
@@ -310,8 +311,13 @@ fun WorkoutTrackerApp(
             )
         }
 
-        composable(route = "change_exercise_trend") {
-            val coroutineScope = rememberCoroutineScope()
+        composable(route = "change_exercise_trend/{slot}") { backStackEntry ->
+            val slot = ExerciseTrendSlot.entries.firstOrNull {
+                it.name == backStackEntry.arguments?.getString("slot")
+            } ?: return@composable
+            val homeEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("main_bottom_nav_flow")
+            }
 
             val exerciseViewModel : ExerciseViewModel =  viewModel(
                 factory = object : androidx.lifecycle.ViewModelProvider.Factory {
@@ -322,6 +328,7 @@ fun WorkoutTrackerApp(
             )
 
             val homeViewModel: HomeViewModel = viewModel(
+                viewModelStoreOwner = homeEntry,
                 factory = object : ViewModelProvider.Factory {
                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
                         // Pass BOTH DAOs now
@@ -337,7 +344,7 @@ fun WorkoutTrackerApp(
             ExercisesScreen(
                 onConfirmSelection = { exercises ->
                     exercises.forEach { exercise ->
-                        homeViewModel.updateExerciseTrend(exercise.id, exercise.name)
+                        homeViewModel.updateExerciseTrend(slot, exercise.id, exercise.name)
                     }
                     navController.popBackStack()
                 },

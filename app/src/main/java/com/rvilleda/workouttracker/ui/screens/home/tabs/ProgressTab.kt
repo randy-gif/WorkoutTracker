@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.rvilleda.workouttracker.model.ExerciseTrendSlot
+import androidx.compose.foundation.lazy.items
 import com.rvilleda.workouttracker.model.WeightUnit
 import com.rvilleda.workouttracker.ui.screens.home.HomeViewModel
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
@@ -57,20 +59,18 @@ import java.util.Date
 @Composable
 fun ProgressTab(
     globalUnit: WeightUnit,
-    onChangeExerciseTrend: () -> Unit,
+    onChangeExerciseTrend: (ExerciseTrendSlot) -> Unit,
     onNavigateToHistory: () -> Unit,
     viewModel: HomeViewModel
 ) {
     var selectedTimeRange by remember { mutableStateOf(TimeRange.MONTH) }
     var isTimeRangeDropdownExpanded by remember { mutableStateOf(false) }
 
-    val trendExercisePreference by viewModel.trendExercisePreference.collectAsState()
 
     val workoutsCount by viewModel.workoutsCount.collectAsState(0)
     val totalVolume by viewModel.totalVolume.collectAsState(0.0)
 
     // 1. Collect the newly created flows from the ViewModel
-    val oneRepMaxTrend by viewModel.oneRMTrend.collectAsState(emptyList())
     val savedWorkouts by viewModel.savedWorkouts.collectAsState()
     val recentRecords by viewModel.recentRecords.collectAsState()
     val context = LocalContext.current.applicationContext
@@ -120,7 +120,6 @@ fun ProgressTab(
     }
 
     val formattedVolume = viewModel.formatVolume(totalVolume)
-    val trendMarker = rememberMarker(unitLabel = globalUnit.name)
 
     // 3. Dynamic Date Formatter based on Time Range
     val dateFormatter = remember(selectedTimeRange) {
@@ -215,6 +214,11 @@ fun ProgressTab(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
+        }
+        items(ExerciseTrendSlot.entries, key = { it.name }) { slot ->
+            val trendExercisePreference by viewModel.trendExercisePreferences.getValue(slot).collectAsState()
+            val oneRepMaxTrend by viewModel.oneRMTrends.getValue(slot).collectAsState()
+            val trendMarker = rememberMarker(unitLabel = globalUnit.name)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -229,7 +233,7 @@ fun ProgressTab(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
+                        Column(Modifier.weight(1f)) {
                             Text(
                                 text = trendExercisePreference.second,
                                 style = MaterialTheme.typography.titleMedium,
@@ -241,7 +245,7 @@ fun ProgressTab(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        TextButton(onClick = onChangeExerciseTrend) {
+                        TextButton(onClick = { onChangeExerciseTrend(slot) }) {
                             Text("Change")
                         }
                     }
